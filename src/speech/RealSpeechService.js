@@ -81,8 +81,17 @@ export class RealSpeechService extends SpeechService {
       if (event.data?.size) this.session?.chunks.push(event.data);
     };
     this.session.mediaRecorder = recorder;
-    recorder.start(120);
-    this.#startRecognition(locale);
+    recorder.start();
+    
+    const isMobile = /iPad|iPhone|iPod|android/i.test(navigator.userAgent) || 
+                     (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+    const hasAzure = Boolean(import.meta.env.VITE_AZURE_SPEECH_KEY && import.meta.env.VITE_AZURE_SPEECH_REGION);
+                  
+    // If we are on mobile AND we have Azure, we skip native recognition to prevent mic hijacking.
+    // But if we don't have Azure, we MUST run native recognition, otherwise we get no text at all!
+    if (!isMobile || !hasAzure) {
+      this.#startRecognition(locale);
+    }
   }
 
   #startRecognition(language) {
