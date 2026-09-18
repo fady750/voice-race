@@ -45,10 +45,21 @@ export function audioBufferToWav(buffer) {
 export async function blobToWav(blob) {
   const Ctor = window.AudioContext || window.webkitAudioContext;
   if (!Ctor) return blob;
-  const ctx = new Ctor();
+  let ctx;
+  try {
+    ctx = new Ctor({ sampleRate: 16000 });
+  } catch {
+    ctx = new Ctor();
+  }
   try {
     const raw = await blob.arrayBuffer();
-    const decoded = await ctx.decodeAudioData(raw.slice(0));
+    const decoded = await new Promise((resolve, reject) => {
+      ctx.decodeAudioData(
+        raw.slice(0),
+        (buffer) => resolve(buffer),
+        (err) => reject(err || new Error("Decode failed"))
+      );
+    });
     return audioBufferToWav(decoded);
   } finally {
     if (ctx.state !== "closed") ctx.close().catch(() => {});
