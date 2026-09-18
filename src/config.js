@@ -7,8 +7,8 @@ export const ASSETS = {
   user: "/assets/user.png",
 };
 
-export const ROAD_SPEED = 1200;
-export const BACKGROUND_SPEED = 22;
+export const ROAD_SPEED = 600;
+export const BACKGROUND_SPEED = 0;
 export const BACKGROUND_TOP = -36;
 export const BACKGROUND_BOTTOM = 36;
 export const BACKGROUND_EASE_ZONE = 14;
@@ -52,9 +52,9 @@ export const RACE = {
 };
 
 export const COINS = {
-  start: 10,
-  correct: 8,
-  close: 3,
+  start: 0,
+  correct: 1,
+  close: 0,
   wrong: 0,
 };
 

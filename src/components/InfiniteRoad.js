@@ -65,6 +65,22 @@ export class InfiniteRoad {
     return this.layout();
   }
 
+  showFinishLine() {
+    if (!this.finishLine) {
+      this.finishLine = document.createElement("div");
+      this.finishLine.className = "finish-line";
+      this.track.appendChild(this.finishLine);
+    }
+    this.finishLineY = -100;
+    this.finishLineActive = true;
+    this.finishLineComplete = false;
+    this.finishLine.style.display = "block";
+  }
+
+  completeFinishLine() {
+    this.finishLineComplete = true;
+  }
+
   #resetStack() {
     const height = this.segmentHeight;
     for (let i = 0; i < SEGMENT_COUNT; i += 1) {
@@ -88,6 +104,14 @@ export class InfiniteRoad {
       while (this.positions[i] >= this.viewportHeight) {
         this.positions[i] -= cycle;
       }
+    }
+    if (this.finishLineActive && this.finishLine) {
+      if (!this.finishLineComplete && this.finishLineY >= 80) {
+        this.finishLineY = 80;
+      } else {
+        this.finishLineY += delta;
+      }
+      this.finishLine.style.transform = `translate3d(0, ${this.finishLineY}px, 0)`;
     }
     this.#paint();
   }

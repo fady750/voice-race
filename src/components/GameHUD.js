@@ -4,7 +4,7 @@ export class GameHUD {
     this.el.className = "game-hud";
     this.el.innerHTML = `
       <div class="hud-coin">
-        <span class="coin-icon" aria-hidden="true">●</span>
+        <img class="coin-icon" src="/assets/daddcoin.webp" alt="Coin" style="width: 24px; height: 24px; object-fit: contain; margin-left: 6px;" />
         <span class="coin-value">0</span>
       </div>
       <div class="hud-right">

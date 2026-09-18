@@ -137,6 +137,10 @@ export class Game {
     this.questionPanel.setWord(q.word);
     this.hud.setProgress(this.questions.number, this.questions.total);
     this.questionPanel.setDisabled(false);
+    
+    if (this.questions.isLast) {
+      this.road.showFinishLine();
+    }
   }
 
   #syncHud() {
@@ -296,9 +300,16 @@ export class Game {
     } else {
       this.race.applyWrong();
       this.state.coins += COINS.wrong;
-      this.botBurst = 0.05;
-      this.botCar.setGlow(true);
       this.audio.playWrong();
+    }
+
+    const botCorrect = Math.random() > 0.5;
+    this.race.applyBotTurn(botCorrect);
+    if (botCorrect) {
+      this.botBurst = 0.08;
+      this.botCar.setGlow(true);
+    } else {
+      this.botBurst = 0.02;
     }
 
     this.#syncHud();
@@ -313,7 +324,10 @@ export class Game {
     this.questionPanel.setDisabled(true);
 
     if (this.questions.isLast) {
-      this.showFinish(false);
+      this.road.completeFinishLine();
+      window.setTimeout(() => {
+        this.showFinish(false);
+      }, 1500);
       return;
     }
 

@@ -52,9 +52,17 @@ export class RaceManager {
   }
 
   applyWrong() {
-    this.botProgress += RACE.wrongBotGain;
     this.playerSurge = RACE.surgeWrong * 0.28;
-    this.botSurge = -RACE.surgeWrong;
+  }
+
+  applyBotTurn(isCorrect) {
+    if (isCorrect) {
+      this.botProgress += RACE.correctGain;
+      this.botSurge = -RACE.surgeCorrect * 0.8;
+    } else {
+      this.botProgress += RACE.wrongBotGain || 0;
+      this.botSurge = RACE.surgeWrong * 0.5;
+    }
   }
 
   applyPassiveBot() {
