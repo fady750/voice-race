@@ -33,8 +33,8 @@ export class RacePositionBar {
     this.playerRank = this.playerMarker.querySelector(".race-rank");
     this.botRank = this.botMarker.querySelector(".race-rank");
 
-    this.playerY = 0.72;
-    this.botY = 0.86;
+    this.playerY = 0.9;
+    this.botY = 0.9;
     this.playerVel = 0;
     this.botVel = 0;
     this.playerPlace = 1;
@@ -43,8 +43,8 @@ export class RacePositionBar {
   }
 
   reset() {
-    this.playerY = 0.72;
-    this.botY = 0.86;
+    this.playerY = 0.9;
+    this.botY = 0.9;
     this.playerVel = 0;
     this.botVel = 0;
     this.playerPlace = 1;
@@ -56,9 +56,8 @@ export class RacePositionBar {
   update(deltaTime, raceState) {
     const playerProgress = Number(raceState?.playerProgress) || 0;
     const botProgress = Number(raceState?.botProgress) || 0;
-    const raceLength = Math.max(40, playerProgress, botProgress, 1);
-    const playerTarget = clamp(1 - playerProgress / raceLength, 0.08, 0.9);
-    const botTarget = clamp(1 - botProgress / raceLength, 0.08, 0.9);
+    const playerTarget = 0.9 - (playerProgress / 100) * 0.82;
+    const botTarget = 0.9 - (botProgress / 100) * 0.82;
 
     const player = smoothDamp(this.playerY, playerTarget, this.playerVel, RACE.markerSmoothTime, deltaTime, 3.2);
     const bot = smoothDamp(this.botY, botTarget, this.botVel, RACE.markerSmoothTime, deltaTime, 3.2);

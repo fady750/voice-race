@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Lateef:wght@400;500;600;700;800&display=swap');
+
 *,
 *::before,
 *::after {
@@ -8,11 +10,12 @@ html,
 body,
 #app {
   margin: 0;
-  width: 100%;
-  height: 100%;
+  padding: 0;
+  width: 100vw;
+  height: 100dvh;
   overflow: hidden;
   background: #071525;
-  font-family: "Cairo", "Segoe UI", sans-serif;
+  font-family: "Lateef", "Cairo", "Segoe UI", sans-serif;
 }
 
 button {
@@ -32,6 +35,7 @@ button {
   position: relative;
   width: 100%;
   height: 100%;
+  box-sizing: border-box;
   overflow: hidden;
   user-select: none;
 }
@@ -40,11 +44,10 @@ button {
 .game-ui {
   position: absolute;
   inset: 0;
-}
-
-.game-ui {
   z-index: 5;
   pointer-events: none;
+  isolation: isolate;
+  transform: translateZ(0);
 }
 
 .game-ui button {
@@ -92,18 +95,16 @@ button {
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  overflow: hidden;
   z-index: 1;
   pointer-events: none;
 }
 
 .road-track {
   position: relative;
-  height: 100%;
+  min-height: 100%;
   transform: perspective(820px) rotateX(16deg) scaleX(1.04);
   transform-origin: center bottom;
   transform-style: preserve-3d;
-  clip-path: polygon(12% 0, 88% 0, 100% 100%, 0 100%);
   will-change: transform;
 }
 
@@ -115,20 +116,33 @@ button {
   will-change: transform;
   pointer-events: none;
   backface-visibility: hidden;
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    #000 10px,
-    #000 calc(100% - 10px),
-    transparent 100%
+}
+
+.road-finish-line {
+  position: absolute;
+  left: 9%;
+  width: 82%;
+  height: clamp(28px, 5vw, 58px);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: clamp(10px, 1.6vw, 18px);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  background: repeating-linear-gradient(
+    45deg,
+    #fff 0 16px,
+    #111c2b 16px 32px
   );
-  mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    #000 10px,
-    #000 calc(100% - 10px),
-    transparent 100%
-  );
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+  transform: translateZ(2px);
+  z-index: 4;
+}
+
+.road-finish-line span {
+  padding: 2px 10px;
+  background: rgba(7, 21, 37, 0.82);
 }
 
 .car-layer {
@@ -217,9 +231,7 @@ button {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  color: transparent;
-  background: radial-gradient(circle at 35% 30%, #ffe58a, #f5b400 55%, #c47b00);
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.35);
+  object-fit: contain;
 }
 
 .hud-progress {
@@ -244,7 +256,8 @@ button {
   top: max(42px, calc(env(safe-area-inset-top) + 3vh));
   left: 50%;
   transform: translateX(-50%);
-  width: min(520px, calc(100% - 40px));
+  width: max(48vw, min(520px, calc(100% - 40px)));
+  max-width: 1400px;
   z-index: 7;
   pointer-events: none;
 }
@@ -601,9 +614,9 @@ button {
 }
 
 .feedback-card {
-  min-width: 180px;
-  padding: 14px 28px;
-  border-radius: 22px;
+  min-width: clamp(180px, 30vw, 360px);
+  padding: clamp(18px, 4vw, 32px) clamp(32px, 6vw, 48px);
+  border-radius: clamp(22px, 4vw, 40px);
   text-align: center;
   color: #fff;
   background: rgba(10, 30, 60, 0.72);
@@ -613,26 +626,46 @@ button {
 
 .feedback-en {
   margin: 0;
-  font-size: 22px;
+  font-size: clamp(22px, 3vw, 36px);
   font-weight: 900;
+  display: none; /* Empty anyway, hide to prevent extra space */
 }
 
 .feedback-ar {
-  margin: 4px 0 0;
-  font-size: 16px;
+  margin: 0;
+  font-size: clamp(48px, 12vw, 92px);
+  font-weight: 900;
+  line-height: 1.2;
+  direction: rtl;
+  unicode-bidi: plaintext;
 }
 
 .feedback[data-type="correct"] .feedback-card {
-  box-shadow: 0 0 30px rgba(80, 255, 210, 0.35);
+  box-shadow: 0 0 30px rgba(99, 255, 93, 0.35);
+}
+.feedback[data-type="correct"] .feedback-ar {
+  color: #63FF5D;
 }
 
 .feedback[data-type="close"] .feedback-card {
-  box-shadow: 0 0 30px rgba(255, 200, 80, 0.35);
+  box-shadow: 0 0 30px rgba(255, 93, 92, 0.35);
+}
+.feedback[data-type="close"] .feedback-ar {
+  color: #FF5D5C;
 }
 
-.feedback[data-type="wrong"] .feedback-card,
+.feedback[data-type="wrong"] .feedback-card {
+  box-shadow: 0 0 30px rgba(255, 93, 92, 0.35);
+}
+.feedback[data-type="wrong"] .feedback-ar {
+  color: #FF5D5C;
+}
+
 .feedback[data-type="error"] .feedback-card {
-  box-shadow: 0 0 30px rgba(255, 110, 160, 0.28);
+  box-shadow: 0 0 30px rgba(249, 208, 15, 0.35);
+}
+.feedback[data-type="error"] .feedback-ar {
+  color: #F9D00F;
 }
 
 .spark-layer {
@@ -818,19 +851,4 @@ button {
   .car {
     bottom: 12%;
   }
-}
-
-.finish-line {
-  position: absolute;
-  width: 100%;
-  height: 40px;
-  background: repeating-linear-gradient(45deg, #fff 25%, transparent 25%, transparent 75%, #fff 75%, #fff), repeating-linear-gradient(45deg, #fff 25%, #000 25%, #000 75%, #fff 75%, #fff);
-  background-position: 0 0, 20px 20px;
-  background-size: 40px 40px;
-  top: 0;
-  left: 0;
-  z-index: 10;
-  display: none;
-  transform: translate3d(0, -100px, 0);
-  will-change: transform;
 }

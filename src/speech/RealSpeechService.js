@@ -1,13 +1,14 @@
 import { blobToWav } from "./wav.js";
 import { SpeechError, SpeechService, normalizePronunciationResult } from "./SpeechService.js";
 
-function getRecognitionCtor() {
-  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
-}
-
 function pickRecorderMime() {
   if (typeof MediaRecorder === "undefined") return "";
-  const types = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
+  const types = [
+    "audio/webm;codecs=opus",
+    "audio/webm",
+    "audio/mp4;codecs=mp4a.40.2",
+    "audio/mp4"
+  ];
   return types.find((type) => MediaRecorder.isTypeSupported(type)) || "";
 }
 
@@ -81,61 +82,7 @@ export class RealSpeechService extends SpeechService {
       if (event.data?.size) this.session?.chunks.push(event.data);
     };
     this.session.mediaRecorder = recorder;
-    recorder.start();
-    
-    const isMobile = /iPad|iPhone|iPod|android/i.test(navigator.userAgent) || 
-                     (navigator.userAgent.includes("Mac") && "ontouchend" in document);
-    const hasAzure = Boolean(import.meta.env.VITE_AZURE_SPEECH_KEY && import.meta.env.VITE_AZURE_SPEECH_REGION);
-                  
-    // If we are on mobile AND we have Azure, we skip native recognition to prevent mic hijacking.
-    // But if we don't have Azure, we MUST run native recognition, otherwise we get no text at all!
-    if (!isMobile || !hasAzure) {
-      this.#startRecognition(locale);
-    }
-  }
-
-  #startRecognition(language) {
-    const Ctor = getRecognitionCtor();
-    const session = this.session;
-    if (!Ctor || !session) return;
-
-    const recognition = new Ctor();
-    recognition.lang = language || "ar-EG";
-    recognition.interimResults = true;
-    recognition.maxAlternatives = 5;
-    recognition.continuous = true;
-
-    const collect = (event) => {
-      for (let i = event.resultIndex; i < event.results.length; i += 1) {
-        const result = event.results[i];
-        for (let j = 0; j < result.length; j += 1) {
-          const alt = result[j];
-          const text = alt?.transcript?.trim();
-          if (!text) continue;
-          if (!session.alternatives.includes(text)) session.alternatives.push(text);
-          if (result.isFinal || j === 0) {
-            session.recognizedText = text;
-            session.confidence = Number(alt.confidence) || session.confidence;
-          }
-        }
-      }
-    };
-
-    recognition.onresult = collect;
-    recognition.onerror = (event) => {
-      session.recognitionError = event?.error || "";
-    };
-    session.recognitionEnded = new Promise((resolve) => {
-      recognition.onend = () => resolve();
-    });
-
-    try {
-      recognition.start();
-      session.recognition = recognition;
-    } catch {
-      session.recognition = null;
-      session.recognitionEnded = Promise.resolve();
-    }
+    recorder.start(120);
   }
 
   async stopRecording() {
@@ -228,47 +175,21 @@ export class RealSpeechService extends SpeechService {
 
     const locale = language || question?.language || session?.language || "ar-EG";
     const referenceText = question?.fullyVocalizedText || expectedText;
-    const azureKey = import.meta.env.VITE_AZURE_SPEECH_KEY;
-    const azureRegion = import.meta.env.VITE_AZURE_SPEECH_REGION;
-    const hasRecognizer = Boolean(getRecognitionCtor());
-    const hasAzure = Boolean(azureKey && azureRegion);
-
-    if (!hasRecognizer && !hasAzure) {
-      throw new SpeechError("لم نتمكن من سماعك، حاول مرة أخرى.", "no_engine");
-    }
-
-    let azureSignals = null;
-    if (hasAzure) {
-      try {
-        azureSignals = await this.#assessWithAzure(blob, referenceText, locale, azureKey, azureRegion);
-      } catch (error) {
-        if (!session?.recognizedText && !session?.alternatives?.length) throw error;
-      }
-    }
-
-    const recognizedText = azureSignals?.recognizedText || session?.recognizedText || "";
-    const alternatives = [
-      ...(session?.alternatives || []),
-      azureSignals?.recognizedText,
-    ].filter(Boolean);
-
-    if (!recognizedText && !hasAzure && session?.recognitionError === "network") {
-      throw new SpeechError("لم نتمكن من سماعك، حاول مرة أخرى.", "api_failed");
-    }
+    const azureSignals = await this.#assessWithAzure(blob, referenceText, locale);
 
     return normalizePronunciationResult({
       expectedText: referenceText,
-      recognizedText,
-      alternatives,
-      pronunciationScore: azureSignals?.pronunciationScore,
-      wordAccuracy: azureSignals?.wordAccuracy,
-      confidence: azureSignals?.confidence || session?.confidence || 0,
-      providerPhonemes: azureSignals?.providerPhonemes || null,
+      recognizedText: azureSignals.recognizedText,
+      alternatives: [azureSignals.recognizedText].filter(Boolean),
+      pronunciationScore: azureSignals.pronunciationScore,
+      wordAccuracy: azureSignals.wordAccuracy,
+      confidence: azureSignals.confidence,
+      providerPhonemes: azureSignals.providerPhonemes,
       question,
     });
   }
 
-  async #assessWithAzure(audio, expectedText, language, key, region) {
+  async #assessWithAzure(audio, expectedText, language) {
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 10000);
     const assessment = {
@@ -290,22 +211,24 @@ export class RealSpeechService extends SpeechService {
         contentType = audio.type || "audio/webm";
       }
 
-      const response = await fetch(
-        `https://${region}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=${encodeURIComponent(language)}&format=detailed`,
-        {
+      const endpoint = import.meta.env.VITE_PRONUNCIATION_API_PATH || "/api/pronunciation-assessment";
+      const response = await fetch(endpoint, {
           method: "POST",
           headers: {
-            "Ocp-Apim-Subscription-Key": key,
             "Content-Type": contentType,
             Accept: "application/json",
-            "Pronunciation-Assessment": assessmentHeader,
+            "X-Pronunciation-Language": language,
+            "X-Pronunciation-Assessment": assessmentHeader,
           },
           body,
           signal: controller.signal,
-        },
-      );
+      });
       if (!response.ok) {
-        throw new SpeechError("لم نتمكن من سماعك، حاول مرة أخرى.", "api_failed");
+        const problem = await response.json().catch(() => null);
+        throw new SpeechError(
+          problem?.error?.message || "لم نتمكن من سماعك، حاول مرة أخرى.",
+          problem?.error?.code || "api_failed",
+        );
       }
       const data = await response.json();
       const best = data.NBest?.[0] || {};

@@ -4,7 +4,6 @@ export class QuestionPanel {
     this.el.className = "question-panel";
     this.el.innerHTML = `
       <div class="question-glass">
-        <p class="question-instruction">انطق الكلمة التالية</p>
         <div class="question-row">
           <button class="speaker-btn" type="button" aria-label="استمع للكلمة">
             <svg viewBox="0 0 24 24" aria-hidden="true">

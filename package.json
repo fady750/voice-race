@@ -6,7 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "pronunciation:benchmark": "node pronunciation-engine/benchmark.mjs",
+    "pronunciation:test": "node scripts/verify-pronunciation-suite.mjs",
+    "ai:test": "node scripts/verify-ai-races.mjs",
+    "race:test": "node scripts/verify-race-distance.mjs",
+    "questions:verify": "node scripts/verify-question-flow.mjs"
   },
   "devDependencies": {
     "vite": "^6.3.5"

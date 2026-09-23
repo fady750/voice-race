@@ -77,6 +77,25 @@ export function isConfusablePhoneme(a, b) {
   return CONFUSABLE_LOOKUP.get(a)?.has(b) || false;
 }
 
+export const LEARNER_ERRORS = {
+  "S": ["s", "z"],
+  "D": ["d", "Z", "z"],
+  "dh": ["z", "d", "Z"],
+  "Z": ["D", "z", "dh"],
+  "H": ["h"],
+  "ayn": ["hamza", "gh"],
+  "gh": ["r", "x"],
+  "x": ["k", "H"],
+  "q": ["k", "j"],
+  "T": ["t", "d"],
+  "th": ["s", "t"],
+};
+
+export function isLearnerError(expected, actual) {
+  if (!expected || !actual || expected === actual) return false;
+  return LEARNER_ERRORS[expected]?.includes(actual) || false;
+}
+
 export function letterPhonemeId(letter = "") {
   return LETTER_TO_PHONEME[letter] || "";
 }

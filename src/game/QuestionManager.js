@@ -1,7 +1,7 @@
-import { QUESTIONS } from "../data/questions.js";
+import { createQuestions } from "../data/questions.js";
 
 export class QuestionManager {
-  constructor(questions = QUESTIONS) {
+  constructor(questions = createQuestions()) {
     this.questions = questions;
     this.index = 0;
   }
@@ -22,7 +22,11 @@ export class QuestionManager {
     return this.index >= this.questions.length - 1;
   }
 
-  reset() {
+  reset(questions = this.questions) {
+    if (!Array.isArray(questions) || questions.length === 0) {
+      throw new Error("A pronunciation session requires at least one question.");
+    }
+    this.questions = questions;
     this.index = 0;
   }
 

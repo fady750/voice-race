@@ -128,6 +128,12 @@ export function buildQuestion({
   plainText,
   language = "ar-EG",
   audio = null,
+  referenceAudioUrl = null,
+  dialect = "msa",
+  pronunciationMode = "fus7a",
+  expectedPhonemes = null,
+  expectedTashkeel = null,
+  metadata = {},
   assessHarakat = true,
 } = {}) {
   const displayText = word || fullyVocalizedText || "";
@@ -143,6 +149,12 @@ export function buildQuestion({
     pronunciationText: graphemesToPhonemes(vocalized).sequence.join(" "),
     language,
     audio,
+    referenceAudioUrl,
+    dialect,
+    pronunciationMode,
+    expectedPhonemes,
+    expectedTashkeel,
+    metadata,
     assessHarakat,
     pronunciationTarget: buildPronunciationTarget(vocalized),
   };

@@ -1,9 +1,12 @@
-import { ASSETS, COINS, FEEDBACK_MS, QUESTION_TRANSITION_MS, RACE, RECORDING_MAX_MS, ROAD_SPEED, SPEECH_DEBUG } from "../config.js";
+import { ASSETS, COINS, FEEDBACK_MS, QUESTION_TRANSITION_MS, RACE, RECORDING_MAX_MS, SPEECH_DEBUG } from "../config.js";
 import { AudioManager } from "../audio/AudioManager.js";
 import { Background } from "../components/Background.js";
 import { BotCar, PlayerCar } from "../components/Cars.js";
 import { Feedback } from "../components/Feedback.js";
-import { ExitModal, FinishScreen } from "../components/FinishScreen.js";
+import { ExitModal } from "../components/FinishScreen.js";
+import { Celebration } from "../Celebration/Celebration.js";
+import { ResultsPanel } from "../ResultsPanel/ResultsPanel.js";
+import { WelcomeScreen } from "../WelcomeScreen/WelcomeScreen.js";
 import { GameHUD } from "../components/GameHUD.js";
 import { InfiniteRoad } from "../components/InfiniteRoad.js";
 import { RacePositionBar } from "../components/Indicators.js";
@@ -11,20 +14,21 @@ import { MicrophoneButton } from "../components/MicrophoneButton.js";
 import { QuestionPanel } from "../components/QuestionPanel.js";
 import { GameStateManager } from "./GameStateManager.js";
 import { QuestionManager } from "./QuestionManager.js";
+import { createQuestions } from "../data/questions.js";
 import { RaceManager } from "./RaceManager.js";
 import { createSpeechService } from "../speech/createSpeechService.js";
 import { logSpeechDebug, SpeechDebugPanel } from "../speech/speechDebug.js";
 import { SpeechError } from "../speech/SpeechService.js";
 import { smoothDamp } from "../utils/easing.js";
+import { api } from "../utils/api.js";
 
 export class Game {
-  constructor(root) {
+  constructor(root, questionProvider = createQuestions) {
     this.root = root;
     this.time = 0;
     this.lastFrame = 0;
     this.raf = 0;
     this.busy = false;
-    this.roadBurst = 0;
     this.playerBurst = 0;
     this.botBurst = 0;
     this.recordTimer = null;
@@ -32,12 +36,21 @@ export class Game {
     this.audioReady = false;
     this.assessing = false;
     this.pendingQuestion = null;
+    this.questionProvider = questionProvider;
 
     this.state = new GameStateManager();
-    this.questions = new QuestionManager();
-    this.race = new RaceManager();
+    this.questions = new QuestionManager(this.questionProvider());
+    this.race = new RaceManager({ totalQuestions: this.questions.total });
     this.audio = new AudioManager();
     this.speech = createSpeechService();
+
+    this.sessionStats = {
+      totalQuestions: 0,
+      answeredQuestions: 0,
+      correctAnswers: 0,
+      wrongAnswers: 0,
+      retries: 0,
+    };
 
     this.#build();
     this.#bind();
@@ -70,8 +83,15 @@ export class Game {
       botSrc: ASSETS.hakim,
     });
     this.feedback = new Feedback(this.ui);
-    this.finish = new FinishScreen(this.ui);
+    this.celebration = new Celebration(this.ui);
+    this.resultsPanel = new ResultsPanel(this.ui, {
+      onRetry: () => this.resetRound(true),
+      onBack: () => window.location.reload()
+    });
     this.exitModal = new ExitModal(this.ui);
+    this.welcomeScreen = new WelcomeScreen(this.ui, {
+      onStart: () => this.beginGame()
+    });
 
     this.particles = document.createElement("div");
     this.particles.className = "spark-layer";
@@ -88,8 +108,6 @@ export class Game {
       this.exitModal.hide();
       this.showFinish(true);
     });
-    this.finish.replayBtn.addEventListener("click", () => this.resetRound(true));
-    this.finish.exitBtn.addEventListener("click", () => this.exitModal.show());
     window.addEventListener("resize", () => this.#resize());
     window.addEventListener("pointerdown", () => this.#unlockAudio(), { once: true });
 
@@ -107,40 +125,76 @@ export class Game {
     this.background.resize();
     const road = this.road.onImageReady();
     this.carLayer.style.width = `${road.width}px`;
+
+    const finishRect = this.road.finishLine.getBoundingClientRect();
+    const carHeight = this.playerCar.el.clientHeight || 126;
+    const carDefaultTopY = this.world.getBoundingClientRect().bottom - (this.world.clientHeight * 0.16) - carHeight;
+    const finishBottomY = finishRect.bottom;
+    
+    // Y translation required to move the car's top edge to the finish line's bottom edge
+    this.maxTravel = finishBottomY - carDefaultTopY;
   }
 
   resetRound(fromFinish) {
     this.busy = false;
     this.assessing = false;
     this.pendingQuestion = null;
+    this.isExiting = false;
+    this.exitDistance = 0;
     this.clearTimers();
-    this.questions.reset();
+    // Do not reuse a previous session's array or progress. The dataset factory
+    // supplies a fresh validated set of the intended ten pronunciation prompts.
+    this.questions.reset(this.questionProvider());
+    this.race.setTotalQuestions(this.questions.total);
+    this.sessionStats = {
+      totalQuestions: this.questions.total,
+      answeredQuestions: 0,
+      correctAnswers: 0,
+      wrongAnswers: 0,
+      retries: 0,
+    };
     this.race.reset();
+    this.road.setQuestionCount(this.questions.total);
     this.state.reset({ coins: COINS.start });
-    this.roadBurst = 0;
     this.playerBurst = 0;
     this.botBurst = 0;
     this.feedback.hide();
-    this.finish.hide();
+    this.celebration.hide();
+    this.resultsPanel.hide();
     this.exitModal.hide();
     this.particles.replaceChildren();
     this.raceBar.reset();
-    this.#syncQuestion();
     this.#syncHud();
     this.microphone.setState("idle");
-    if (fromFinish) this.audio.playMicStart();
+
+    if (fromFinish) {
+      if (api.hasToken) {
+        api.startGameSession().catch(e => console.error(e));
+      }
+      this.#syncQuestion();
+      this.audio.playMicStart();
+    } else {
+      this.welcomeScreen.show(this.questions.total);
+    }
+  }
+
+  beginGame() {
+    this.welcomeScreen.hide();
+    if (api.hasToken) {
+      api.startGameSession().catch(e => console.error(e));
+    }
+    this.#syncQuestion();
+    this.audio.playMicStart();
   }
 
   #syncQuestion() {
     const q = this.questions.current;
     if (!q) return;
+    this.questionStartTime = Date.now();
     this.questionPanel.setWord(q.word);
     this.hud.setProgress(this.questions.number, this.questions.total);
     this.questionPanel.setDisabled(false);
-    
-    if (this.questions.isLast) {
-      this.road.showFinishLine();
-    }
+    this.playWord();
   }
 
   #syncHud() {
@@ -155,7 +209,7 @@ export class Game {
     }
     this.#unlockAudio();
     this.audio.stopSpeech();
-    this.audio.speakWord(q.fullyVocalizedText || q.word, q.language, q.audio);
+    this.audio.speakWord(q.fullyVocalizedText || q.word, q.language, q.audio || q.referenceAudioUrl);
   }
 
   async onMicPressed() {
@@ -184,6 +238,7 @@ export class Game {
         8000,
         "mic_timeout",
       );
+      this.#logPronunciation("Recording started");
       this.pendingQuestion = q;
       this.state.toRecording();
       this.microphone.setState("recording");
@@ -215,6 +270,8 @@ export class Game {
       this.microphone.setState("processing");
       const audio = await this.#withTimeout(this.speech.stopRecording(), 5000, "stop_timeout");
       this.audio.muted = false;
+      this.#logPronunciation("Audio received");
+      this.#logPronunciation(`Expected: ${expectedText}`);
       if (!expectedText) {
         throw new SpeechError("لم نتمكن من سماعك، حاول مرة أخرى.", "missing_expected");
       }
@@ -226,6 +283,13 @@ export class Game {
         10000,
         "assess_timeout",
       );
+      this.#logPronunciation(`Detected: ${assessment.recognizedText || "(none)"}`);
+      this.#logPronunciation(`Phoneme result: ${assessment.phonemeScore ?? "unavailable"}`);
+      this.#logPronunciation(`Harakat result: ${assessment.vowelScore ?? "unavailable"}`);
+      this.#logPronunciation(`Shadda result: ${assessment.shadda?.correct ?? "unavailable"}`);
+      this.#logPronunciation(`Madd result: ${assessment.madd?.correct ?? "unavailable"}`);
+      this.#logPronunciation(`Final score: ${assessment.overallScore ?? "unavailable"}`);
+      this.#logPronunciation(`Correct: ${assessment.result === "correct"}`);
       logSpeechDebug(assessment);
       this.applyResult(assessment);
     } catch (error) {
@@ -239,16 +303,20 @@ export class Game {
   }
 
   handleSpeechFailure(error) {
+    this.sessionStats.retries += 1;
     this.clearTimers();
     this.audio.muted = false;
     this.speech.cancelRecording().catch(() => {});
+    if (import.meta.env.DEV) {
+      console.error(`[Pronunciation] Failed (${error?.code || "unknown"}):`, error);
+    }
     const message =
       error instanceof SpeechError
         ? error.message
         : "لم نتمكن من سماعك، حاول مرة أخرى.";
     this.state.failToIdle(message);
     this.microphone.setState("idle");
-    this.feedback.show("error", message);
+    this.feedback.show("error", null);
     this.feedbackTimer = window.setTimeout(() => this.feedback.hide(), 1800);
   }
 
@@ -270,20 +338,35 @@ export class Game {
     });
   }
 
+  #logPronunciation(message) {
+    if (import.meta.env.DEV) console.info(`[Pronunciation] ${message}`);
+  }
+
   applyResult(assessment) {
+    const q = this.questions.current;
     const result = assessment?.result || String(assessment?.status || "").toLowerCase();
     if (result !== "correct" && result !== "close" && result !== "wrong") {
       this.handleSpeechFailure(new SpeechError("لم نتمكن من سماعك، حاول مرة أخرى.", "bad_result"));
       return;
     }
+    
+    if (api.hasToken && q) {
+      const timeTaken = Math.round((Date.now() - (this.questionStartTime || Date.now())) / 1000);
+      const selectedAnswer = result === "correct" ? q.word : q.word + q.word;
+      api.submitAnswer(q.id, selectedAnswer, timeTaken).catch(e => console.error(e));
+    }
+
     this.state.toFeedback(result);
+    this.race.resolveQuestion({ playerCorrect: result === "correct" });
     this.microphone.setState(result);
-    this.feedback.show(result, assessment.childFeedback);
+    this.feedback.show(result, null);
+    
+    this.sessionStats.answeredQuestions += 1;
+    this.state.coins += 1; // +1 coin for completing the question
 
     if (result === "correct") {
+      this.sessionStats.correctAnswers += 1;
       this.race.applyCorrect();
-      this.state.coins += COINS.correct;
-      this.roadSpeedTarget = ROAD_SPEED + RACE.roadBurstCorrect;
       this.playerBurst = 0.08;
       this.playerCar.setGlow(true);
       this.audio.playCorrect();
@@ -291,25 +374,16 @@ export class Game {
       this.spawnSparks("correct");
     } else if (result === "close") {
       this.race.applyClose();
-      this.state.coins += COINS.close;
-      this.roadSpeedTarget = ROAD_SPEED + RACE.roadBurstClose;
       this.playerBurst = 0.04;
       this.playerCar.setGlow(true);
       this.audio.playClose();
       this.spawnSparks("close");
     } else {
+      this.sessionStats.wrongAnswers += 1;
       this.race.applyWrong();
-      this.state.coins += COINS.wrong;
-      this.audio.playWrong();
-    }
-
-    const botCorrect = Math.random() > 0.5;
-    this.race.applyBotTurn(botCorrect);
-    if (botCorrect) {
-      this.botBurst = 0.08;
+      this.botBurst = 0.05;
       this.botCar.setGlow(true);
-    } else {
-      this.botBurst = 0.02;
+      this.audio.playWrong();
     }
 
     this.#syncHud();
@@ -318,16 +392,12 @@ export class Game {
 
   advanceAfterFeedback() {
     this.feedback.hide();
-    this.roadSpeedTarget = ROAD_SPEED;
     this.playerCar.setGlow(false);
     this.botCar.setGlow(false);
     this.questionPanel.setDisabled(true);
 
     if (this.questions.isLast) {
-      this.road.completeFinishLine();
-      window.setTimeout(() => {
-        this.showFinish(false);
-      }, 1500);
+      this.showFinish(false);
       return;
     }
 
@@ -345,14 +415,45 @@ export class Game {
     this.state.toFinished();
     this.microphone.setState("idle");
     this.questionPanel.setDisabled(true);
-    if (!fromExit) this.audio.playFinish();
-    this.finish.show({
-      playerWon: this.race.playerWon,
-      playerProgress: this.race.playerProgress,
-      botProgress: this.race.botProgress,
-      coins: this.state.coins,
-      totalQuestions: this.questions.total,
-    });
+
+    const finalize = async () => {
+      let apiStats = null;
+      if (api.hasToken) {
+        try {
+          apiStats = await api.completeGame();
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      const data = {
+        score: apiStats?.score ?? this.sessionStats.correctAnswers,
+        totalScore: this.sessionStats.totalQuestions,
+        correctAnswers: this.sessionStats.correctAnswers,
+        wrongAnswers: this.sessionStats.wrongAnswers,
+        coins: apiStats?.coins ?? this.state.coins,
+        playerProgress: this.race.playerProgress,
+        botProgress: this.race.botProgress
+      };
+      
+      if (this.sessionStats.correctAnswers > 0) {
+        this.celebration.show(() => {
+          this.resultsPanel.show(data);
+        });
+      } else {
+        this.resultsPanel.show(data);
+      }
+    };
+
+    if (fromExit) {
+      finalize();
+    } else {
+      this.audio.playFinish();
+      window.setTimeout(() => {
+        this.isExiting = true;
+        this.onExitComplete = finalize;
+      }, 800);
+    }
   }
 
   spawnSparks(type) {
@@ -393,23 +494,57 @@ export class Game {
   update(deltaTime) {
     this.race.tick(deltaTime);
     this.raceBar.update(deltaTime, this.race.getRaceState());
-    this.roadBurst *= 1 - Math.min(1, deltaTime * 2.4);
-    this.road.setSpeed(ROAD_SPEED + this.roadBurst);
-    this.road.update(deltaTime);
+    
+    // The road is static now.
+    this.road.setProgress(0);
     this.background.update(deltaTime);
 
     const offsets = this.race.visualOffsets();
+    
+    const isFinished = this.state.current === "finished";
+    const playerProgress = isFinished ? Math.min(100, offsets.player) : offsets.player;
+    const botProgress = isFinished ? Math.min(100, offsets.bot) : offsets.bot;
+    
+    const playerSurge = isFinished ? 0 : offsets.playerSurge;
+    const botSurge = isFinished ? 0 : offsets.botSurge;
+    const hoverTime = isFinished ? 0 : this.time; // freeze hover if finished
+
+    const maxTravel = this.maxTravel || -(this.world.clientHeight * 0.72);
+    
+    let playerY = (playerProgress / 100) * maxTravel + playerSurge;
+    let botY = (botProgress / 100) * maxTravel + botSurge;
+    
+    // Strict visual safety clamp: Y must not go further negative (higher) than maxTravel
+    if (!this.isExiting) {
+      playerY = Math.max(playerY, maxTravel);
+      botY = Math.max(botY, maxTravel);
+    } else {
+      this.exitDistance = (this.exitDistance || 0) + (1200 * deltaTime);
+      playerY -= this.exitDistance;
+      botY -= this.exitDistance;
+      
+      if (playerY < -this.world.clientHeight * 1.5 && botY < -this.world.clientHeight * 1.5) {
+        if (this.onExitComplete) {
+          const cb = this.onExitComplete;
+          this.onExitComplete = null;
+          cb();
+        }
+      }
+    }
+
     this.playerCar.update({
       xPercent: 34,
-      y: offsets.player,
-      time: this.time,
-      burst: this.playerBurst,
+      y: playerY,
+      time: hoverTime,
+      burst: isFinished ? 0 : this.playerBurst,
+      tilt: isFinished ? 0 : offsets.playerTilt,
     });
     this.botCar.update({
       xPercent: 66,
-      y: offsets.bot,
-      time: this.time,
-      burst: this.botBurst,
+      y: botY,
+      time: hoverTime,
+      burst: isFinished ? 0 : this.botBurst,
+      tilt: isFinished ? 0 : offsets.botTilt,
     });
   }
 }

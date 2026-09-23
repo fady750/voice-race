@@ -5,10 +5,10 @@ export const ASSETS = {
   car2: "/assets/car2.png",
   hakim: "/assets/hakim.png",
   user: "/assets/user.png",
+  daddcoin: "/assets/daddcoin.webp",
 };
 
-export const ROAD_SPEED = 600;
-export const BACKGROUND_SPEED = 0;
+export const BACKGROUND_SPEED = 22;
 export const BACKGROUND_TOP = -36;
 export const BACKGROUND_BOTTOM = 36;
 export const BACKGROUND_EASE_ZONE = 14;
@@ -19,14 +19,16 @@ export const MOCK_PROCESSING_MS = 700;
 export const FEEDBACK_MS = 1600;
 export const QUESTION_TRANSITION_MS = 420;
 
+const ENV = import.meta.env || {};
+
 export const USE_MOCK_SPEECH =
-  String(import.meta.env.VITE_USE_MOCK_SPEECH ?? "false").toLowerCase() === "true";
+  String(ENV.VITE_USE_MOCK_SPEECH ?? "false").toLowerCase() === "true";
 
 export const SPEECH_DEBUG =
-  Boolean(import.meta.env.DEV) &&
-  String(import.meta.env.VITE_SPEECH_DEBUG ?? "true").toLowerCase() !== "false";
+  Boolean(ENV.DEV) &&
+  String(ENV.VITE_SPEECH_DEBUG ?? "true").toLowerCase() !== "false";
 
-export const SPEECH_LANGUAGE = import.meta.env.VITE_SPEECH_LANGUAGE || "ar-EG";
+export const SPEECH_LANGUAGE = ENV.VITE_SPEECH_LANGUAGE || "ar-EG";
 
 export const PRONUNCIATION_THRESHOLDS = {
   correct: 80,
@@ -46,16 +48,22 @@ export const RACE = {
   carSmoothTime: 0.58,
   markerSmoothTime: 0.72,
   surgeDecay: 2.4,
-  roadBurstCorrect: 260,
-  roadBurstClose: 110,
   roadSmoothTime: 0.5,
+  aiDifficulty: 0.5,
+  aiBaseSpeed: 4.2,
+  aiSpeedVariation: 0.08,
+  aiCatchUpRange: 18,
+  aiCatchUpStrength: 0.32,
+  aiMaxAdvantage: 16,
+  aiMaxDeficit: 22,
+  aiAccelerationTime: 0.9,
+  aiMaxStep: 0.28,
 };
 
 export const COINS = {
-  start: 0,
-  correct: 1,
-  close: 0,
+  start: 10,
+  correct: 8,
+  close: 3,
   wrong: 0,
 };
 
-export const TOTAL_QUESTIONS = 5;

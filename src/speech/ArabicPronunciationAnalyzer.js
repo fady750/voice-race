@@ -3,6 +3,7 @@ import {
   analyzeArabicMatch,
   extractLetterUnits,
   isConfusablePhoneme,
+  isLearnerError,
   normalizeArabic,
   similarityScore,
 } from "../utils/arabic.js";
@@ -78,6 +79,7 @@ export class GraphemePhonemeFallbackProvider extends ArabicPhonemeAlignmentProvi
     const aligned = alignSequences(expected.consonantSequence, actual.consonantSequence);
     let matches = 0;
     let confusable = 0;
+    let learnerErrors = 0;
     let other = 0;
     const weak = [];
     for (const pair of aligned.pairs) {
@@ -85,7 +87,17 @@ export class GraphemePhonemeFallbackProvider extends ArabicPhonemeAlignmentProvi
         matches += 1;
         continue;
       }
-      if (pair.kind === "substitute" && isConfusablePhoneme(pair.expected, pair.actual)) {
+      
+      const isLearner = isLearnerError(pair.expected, pair.actual);
+      if (isLearner) {
+        learnerErrors += 1;
+        weak.push({
+          expected: pair.expected,
+          actual: pair.actual,
+          display: LETTER_DISPLAY[pair.expected] || pair.expected,
+          isLearnerError: true
+        });
+      } else if (pair.kind === "substitute" && isConfusablePhoneme(pair.expected, pair.actual)) {
         confusable += 1;
         weak.push({
           expected: pair.expected,
@@ -137,6 +149,10 @@ export class GraphemePhonemeFallbackProvider extends ArabicPhonemeAlignmentProvi
           vowelCount += 1;
           if (exp.haraka === act?.haraka) vowelMatches += 1;
         }
+        if (exp?.shadda) {
+          vowelCount += 1;
+          if (act?.shadda) vowelMatches += 1;
+        }
         ei += 1;
         ai += 1;
       }
@@ -152,6 +168,7 @@ export class GraphemePhonemeFallbackProvider extends ArabicPhonemeAlignmentProvi
       pairs: aligned.pairs,
       weakPhonemes: weak,
       confusableCount: confusable,
+      learnerErrorCount: learnerErrors,
       otherMismatchCount: other,
     };
   }
@@ -237,6 +254,7 @@ export class ArabicPronunciationAnalyzer {
     const phonemeSource = providerLayer.available ? providerLayer.source : fallbackLayer.source || "unavailable";
     const weakPhonemes = providerLayer.available ? [] : (fallbackLayer.weakPhonemes || []);
     const confusableCount = fallbackLayer.confusableCount || 0;
+    const learnerErrorCount = fallbackLayer.learnerErrorCount || 0;
     const otherMismatchCount = fallbackLayer.otherMismatchCount || 0;
 
     let overallScore = weightedMean([
@@ -255,6 +273,9 @@ export class ArabicPronunciationAnalyzer {
     }
     if (confusableCount > 0) {
       overallScore = Math.min(overallScore, 48);
+    }
+    if (learnerErrorCount > 0) {
+      overallScore = Math.min(overallScore, 42);
     }
     if (otherMismatchCount > 0 && best.kind !== "exact" && best.kind !== "contains" && best.kind !== "insertion") {
       overallScore = Math.min(overallScore, 52);
@@ -283,6 +304,7 @@ export class ArabicPronunciationAnalyzer {
       best,
       weakPhonemes,
       confusableCount,
+      learnerErrorCount,
       assessHarakat: question.assessHarakat !== false,
     });
 
@@ -337,6 +359,7 @@ export class ArabicPronunciationAnalyzer {
     best,
     weakPhonemes,
     confusableCount,
+    learnerErrorCount,
   }) {
     const correctAt = thresholds.correct;
     const closeAt = thresholds.close;
@@ -350,6 +373,8 @@ export class ArabicPronunciationAnalyzer {
     const phonemesClose = phonemeScore != null && phonemeScore >= 55 && phonemeScore < 78;
 
     if (best.kind === "empty") {
+      status = "WRONG";
+    } else if (learnerErrorCount > 0) {
       status = "WRONG";
     } else if (confusableCount > 0 || best.kind === "substitution") {
       status = wordMatchScore >= 70 ? "CLOSE" : "WRONG";

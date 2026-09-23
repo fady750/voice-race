@@ -1,8 +1,7 @@
 const COPY = {
-  correct: { title: "ممتاز! نطقك رائع!", en: "" },
-  close: { title: "قريب جدًا! جرّب مرة أخرى.", en: "" },
-  wrong: { title: "حاول مرة أخرى.", en: "" },
-  error: { title: "لم نتمكن من سماعك، حاول مرة أخرى.", en: "" },
+  correct: { title: "أحسنت", en: "" },
+  wrong: { title: "خطأ", en: "" },
+  error: { title: "ثانِيَةً", en: "" },
 };
 
 export class Feedback {

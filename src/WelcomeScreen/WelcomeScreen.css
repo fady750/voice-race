@@ -1,0 +1,179 @@
+.welcome-screen-new {
+  direction: rtl;
+  height: 100dvh;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  
+  /* Blur background matching the current game, slightly darkened */
+  background: rgba(17, 54, 69, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 20px;
+}
+
+.welcome-header {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.welcome-stats-bg {
+  direction: ltr; /* Override for LTR layout inside the badge */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-image: url('../assets/QuestionNumber.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+  padding: 10px 24px;
+  gap: 12px;
+  min-width: 200px;
+  height: 60px;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 800;
+  font-size: 20px;
+  color: white;
+}
+
+.welcome-qcoin {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+}
+
+.welcome-dcoin {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+}
+
+.welcome-points {
+  color: #FFD700; /* Yellow */
+}
+
+.welcome-separator {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.welcome-body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 700px;
+  margin-top: 60px; /* Space for the absolute header */
+}
+
+.welcome-description {
+  max-width: 100%;
+  max-height: 50vh;
+  object-fit: contain;
+  display: block;
+}
+
+.welcome-start-btn {
+  background-image: url('../assets/startButton.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  
+  width: 220px;
+  height: 80px;
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  font-family: 'Cairo', sans-serif;
+  font-weight: 900;
+  font-size: 28px;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  
+  /* Slightly extra padding-bottom to vertically center text on graphic */
+  padding-bottom: 8px;
+  
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.welcome-start-btn:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+
+.welcome-start-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.welcome-start-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  font-size: 18px;
+}
+
+/* Rule 2: Mobile Portrait/General */
+@media (pointer: coarse), (max-width: 950px) {
+  .welcome-description {
+    max-height: none; /* Remove max-height constraints */
+    max-width: 400px;
+    width: 90%;
+  }
+}
+
+/* Rule 1: Mobile Landscape */
+@media (max-width: 900px) and (max-height: 500px) {
+  .welcome-screen-new {
+    gap: 12px;
+    padding: 10px;
+    justify-content: flex-start;
+  }
+  
+  .welcome-header {
+    position: static;
+    margin-bottom: 0;
+  }
+  
+  .welcome-body {
+    margin-top: 0;
+  }
+
+  .welcome-stats-bg {
+    height: 44px;
+    min-width: 160px;
+    padding: 6px 16px;
+    font-size: 16px;
+  }
+  
+  .welcome-qcoin {
+    height: 24px;
+  }
+  
+  .welcome-dcoin {
+    height: 28px;
+  }
+  
+  .welcome-description {
+    width: 60%;
+    max-width: 300px;
+  }
+  
+  .welcome-start-btn {
+    width: 160px;
+    height: 60px;
+    font-size: 20px;
+    padding-bottom: 6px;
+  }
+}
