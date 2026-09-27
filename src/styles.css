@@ -1069,9 +1069,10 @@ button {
   }
 }
 
-@media (max-width: 320px) {
+@media (max-width: 480px) {
   .game-hud-new {
-    padding: 4px;
+    padding: 4px 6px;
+    border-radius: 8px;
     gap: 4px;
   }
   
@@ -1080,14 +1081,14 @@ button {
   }
   
   .hud-avatar {
-    width: 24px;
-    height: 24px;
+    width: 30px;
+    height: 30px;
   }
   
   .hud-pill {
     padding: 2px 4px;
-    min-width: unset;
-    gap: 2px;
+    min-width: 40px;
+    gap: 3px;
   }
   
   .score-val {
@@ -1108,7 +1109,7 @@ button {
   }
   
   .question-word {
-    font-size: 14px;
+    font-size: 15px;
   }
   
   .speaker-btn {
