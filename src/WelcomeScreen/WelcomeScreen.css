@@ -24,7 +24,36 @@
 .welcome-header {
   position: absolute;
   top: 20px;
+  left: 20px;
   right: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.welcome-exit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.welcome-exit-btn img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.welcome-exit-btn:hover {
+  transform: scale(1.1);
+}
+
+.welcome-exit-btn:active {
+  transform: scale(0.9);
 }
 
 .welcome-stats-bg {
@@ -144,6 +173,7 @@
   .welcome-header {
     position: static;
     margin-bottom: 0;
+    width: 100%;
   }
   
   .welcome-body {

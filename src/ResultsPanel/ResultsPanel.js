@@ -5,6 +5,8 @@ import coinsImage from './assets/money.png';
 import correctImage from './assets/right.png';
 import wrongImage from './assets/wrong.png';
 import buttonFrame from './assets/boutton.png';
+import exitIconUrl from '../assets/ExitButton.svg';
+import retryIconUrl from '../assets/retry.png';
 
 const numberValue = (value) => {
   const parsed = Number(value);
@@ -35,18 +37,22 @@ export class ResultsPanel {
     const content = document.createElement("div");
     content.className = "results-panel__content";
 
-    const titleImg = document.createElement("img");
-    titleImg.className = "results-panel__title";
-    titleImg.src = celebrationTitle;
-    titleImg.alt = "أحسنت";
+    this.titleImg = document.createElement("img");
+    this.titleImg.className = "results-panel__title";
+    this.titleImg.src = celebrationTitle;
+    this.titleImg.alt = "أحسنت";
+    this.titleImg.style.display = "none";
+    this.titleImg.style.paddingTop = "clamp(24px, 4vh, 40px)";
 
-    const scoreCard = document.createElement("div");
-    scoreCard.className = "results-score-card";
-    const scoreLabel = document.createElement("span");
-    scoreLabel.className = "results-score-card__label";
-    scoreLabel.textContent = "الدَّرَجَةُ";
-    this.scoreText = document.createElement("strong");
-    scoreCard.append(scoreLabel, this.scoreText);
+    this.titleText = document.createElement("h2");
+    this.titleText.className = "results-panel__title-text";
+    this.titleText.style.fontSize = "clamp(32px, 8vw, 64px)";
+    this.titleText.style.fontWeight = "900";
+    this.titleText.style.color = "#fff";
+    this.titleText.style.margin = "0 0 16px 0";
+    this.titleText.style.paddingTop = "clamp(32px, 6vh, 60px)";
+    this.titleText.style.textShadow = "0 4px 12px rgba(0,0,0,0.5)";
+    this.titleText.style.display = "none";
 
     const stats = document.createElement("div");
     stats.className = "results-stats";
@@ -79,7 +85,7 @@ export class ResultsPanel {
     wrongCard.append(wrongImg, this.wrongText);
 
     stats.append(correctCard, coinsCard, wrongCard);
-    content.append(titleImg, scoreCard, stats);
+    content.append(this.titleImg, this.titleText, stats);
     panel.append(content);
 
     const actions = document.createElement("div");
@@ -95,13 +101,16 @@ export class ResultsPanel {
     backBtnImg.setAttribute("aria-hidden", "true");
     const backGrp = document.createElement("span");
     backGrp.className = "results-action__group";
-    const backTxt = document.createElement("span");
-    backTxt.textContent = "ارْجِعْ";
-    const backIcon = document.createElement("span");
-    backIcon.className = "results-action__exit-icon";
+    backGrp.style.gap = "8px";
+    const backIcon = document.createElement("img");
+    backIcon.src = exitIconUrl;
+    backIcon.style.width = "24px";
+    backIcon.style.height = "24px";
+    backIcon.style.objectFit = "contain";
     backIcon.setAttribute("aria-hidden", "true");
-    backIcon.textContent = "⎋";
-    backGrp.append(backTxt, backIcon);
+    const backTxt = document.createElement("span");
+    backTxt.textContent = "اخرج";
+    backGrp.append(backIcon, backTxt);
     backBtn.append(backBtnImg, backGrp);
 
     const retryBtn = document.createElement("button");
@@ -112,12 +121,23 @@ export class ResultsPanel {
     retryBtnImg.src = buttonFrame;
     retryBtnImg.alt = "";
     retryBtnImg.setAttribute("aria-hidden", "true");
-    const retryIcon = document.createElement("span");
-    retryIcon.setAttribute("aria-hidden", "true");
-    retryIcon.textContent = "↻";
+    
+    const retryGrp = document.createElement("span");
+    retryGrp.className = "results-action__group";
+    retryGrp.style.gap = "8px";
+    
+    const retryIconImg = document.createElement("img");
+    retryIconImg.src = retryIconUrl;
+    retryIconImg.style.width = "28px";
+    retryIconImg.style.height = "28px";
+    retryIconImg.style.objectFit = "contain";
+    retryIconImg.setAttribute("aria-hidden", "true");
+    
     const retryTxt = document.createElement("span");
-    retryTxt.textContent = "ثانِيَةً";
-    retryBtn.append(retryBtnImg, retryIcon, retryTxt);
+    retryTxt.textContent = "إعادة";
+
+    retryGrp.append(retryIconImg, retryTxt);
+    retryBtn.append(retryBtnImg, retryGrp);
 
     actions.append(backBtn, retryBtn);
     screen.append(panel, actions);
@@ -125,13 +145,21 @@ export class ResultsPanel {
   }
 
   show(data = {}) {
-    const finalScore = numberValue(data.score);
     const maximumScore = numberValue(data.totalScore) || 100;
     const correct = numberValue(data.correctAnswers);
     const wrong = numberValue(data.wrongAnswers);
     const earnedCoins = numberValue(data.coins);
 
-    this.scoreText.textContent = `${finalScore}/${maximumScore}`;
+    if (correct >= maximumScore / 2) {
+      this.titleImg.style.display = "block";
+      this.titleText.style.display = "none";
+    } else {
+      this.titleImg.style.display = "none";
+      this.titleText.style.display = "block";
+      this.titleText.textContent = "حاول مرة أخرى";
+      this.titleText.style.color = "#f44336";
+    }
+
     this.correctText.textContent = correct;
     this.wrongText.textContent = wrong;
     this.coinsText.textContent = `+${earnedCoins}`;

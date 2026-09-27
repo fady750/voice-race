@@ -56,7 +56,9 @@ export class InfiniteRoad {
     const vw = rect.width || window.innerWidth;
     const vh = rect.height || window.innerHeight;
     this.viewportHeight = vh;
-    const width = Math.max(220, vw * 0.56);
+    
+    // Cap the road width at 500px so it retains a long, narrow perspective on big screens
+    const width = Math.min(500, Math.max(220, vw * 0.56));
     const height = width * (this.naturalHeight / this.naturalWidth);
     this.segmentHeight = height;
     
@@ -92,8 +94,8 @@ export class InfiniteRoad {
     }
     
     // Position the finish line fixed near the horizon of the track.
-    // E.g. top: 12% of the track.
-    this.finishLine.style.top = `12%`;
+    // E.g. top: 5% of the track.
+    this.finishLine.style.top = `5%`;
     this.track.style.top = "0px";
   }
 

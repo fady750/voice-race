@@ -11,7 +11,6 @@ import { GameHUD } from "../components/GameHUD.js";
 import { InfiniteRoad } from "../components/InfiniteRoad.js";
 import { RacePositionBar } from "../components/Indicators.js";
 import { MicrophoneButton } from "../components/MicrophoneButton.js";
-import { QuestionPanel } from "../components/QuestionPanel.js";
 import { GameStateManager } from "./GameStateManager.js";
 import { QuestionManager } from "./QuestionManager.js";
 import { createQuestions } from "../data/questions.js";
@@ -76,7 +75,6 @@ export class Game {
     this.botCar = new BotCar(this.carLayer, ASSETS.car2);
 
     this.hud = new GameHUD(this.ui);
-    this.questionPanel = new QuestionPanel(this.ui);
     this.microphone = new MicrophoneButton(this.ui);
     this.raceBar = new RacePositionBar(this.ui, {
       playerSrc: ASSETS.user,
@@ -101,7 +99,7 @@ export class Game {
 
   #bind() {
     this.microphone.button.addEventListener("click", () => this.onMicPressed());
-    this.questionPanel.speakerBtn.addEventListener("click", () => this.playWord());
+    this.hud.speakerBtn.addEventListener("click", () => this.playWord());
     this.hud.closeBtn.addEventListener("click", () => this.exitModal.show());
     this.exitModal.stayBtn.addEventListener("click", () => this.exitModal.hide());
     this.exitModal.leaveBtn.addEventListener("click", () => {
@@ -191,14 +189,15 @@ export class Game {
     const q = this.questions.current;
     if (!q) return;
     this.questionStartTime = Date.now();
-    this.questionPanel.setWord(q.word);
+    this.hud.setWord(q.word);
     this.hud.setProgress(this.questions.number, this.questions.total);
-    this.questionPanel.setDisabled(false);
+    this.hud.setDisabled(false);
     this.playWord();
   }
 
   #syncHud() {
-    this.hud.setCoins(this.state.coins);
+    this.hud.setUserScore(this.sessionStats.correctAnswers);
+    this.hud.setBotScore(this.race.robotSteps);
   }
 
   playWord() {
@@ -394,7 +393,7 @@ export class Game {
     this.feedback.hide();
     this.playerCar.setGlow(false);
     this.botCar.setGlow(false);
-    this.questionPanel.setDisabled(true);
+    this.hud.setDisabled(true);
 
     if (this.questions.isLast) {
       this.showFinish(false);
@@ -414,7 +413,7 @@ export class Game {
     this.clearTimers();
     this.state.toFinished();
     this.microphone.setState("idle");
-    this.questionPanel.setDisabled(true);
+    this.hud.setDisabled(true);
 
     const finalize = async () => {
       let apiStats = null;
@@ -436,7 +435,7 @@ export class Game {
         botProgress: this.race.botProgress
       };
       
-      if (this.sessionStats.correctAnswers > 0) {
+      if (this.sessionStats.correctAnswers >= this.sessionStats.totalQuestions / 2) {
         this.celebration.show(() => {
           this.resultsPanel.show(data);
         });

@@ -2,11 +2,13 @@ import './WelcomeScreen.css';
 import questionCoinImg from '../assets/QuestionCoin.png';
 import daddcoinImg from '../assets/daddcoin.webp';
 import descriptionImg from '../assets/description.png';
+import exitButtonImg from '../assets/ExitButton.svg';
 
 export class WelcomeScreen {
   constructor(root, options = {}) {
     this.root = root;
     this.onStart = options.onStart;
+    this.onExit = options.onExit || (() => { window.history.back(); });
     this.#build();
   }
 
@@ -31,7 +33,7 @@ export class WelcomeScreen {
     
     const separator = document.createElement('span');
     separator.className = 'welcome-separator';
-    separator.textContent = '>';
+    separator.textContent = '=';
     
     this.daddPoints = document.createElement('span');
     this.daddPoints.className = 'welcome-points';
@@ -42,7 +44,16 @@ export class WelcomeScreen {
     dCoin.className = 'welcome-dcoin';
     
     statsBadge.append(qCoin, this.qCount, separator, this.daddPoints, dCoin);
-    header.append(statsBadge);
+    
+    const exitBtn = document.createElement('button');
+    exitBtn.className = 'welcome-exit-btn';
+    exitBtn.type = 'button';
+    exitBtn.innerHTML = `<img src="${exitButtonImg}" alt="خروج" />`;
+    exitBtn.onclick = () => {
+      if (this.onExit) this.onExit();
+    };
+
+    header.append(exitBtn, statsBadge);
     
     // Body
     const body = document.createElement('div');
