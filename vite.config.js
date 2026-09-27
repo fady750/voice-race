@@ -85,6 +85,8 @@ function azurePronunciationProxy(env) {
   };
 }
 
+import basicSsl from '@vitejs/plugin-basic-ssl';
+
 export default defineConfig(({ mode }) => {
   const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)));
   const env = loadEnv(mode, projectRoot, "");
@@ -94,10 +96,11 @@ export default defineConfig(({ mode }) => {
     `[Azure proxy] root=${projectRoot} keyConfigured=${keyConfigured} regionConfigured=${regionConfigured}`,
   );
   return {
-    plugins: [azurePronunciationProxy(env)],
+    plugins: [basicSsl(), azurePronunciationProxy(env)],
     server: {
       port: 5179,
       host: true,
+      https: true,
     },
     preview: {
       port: 4173,

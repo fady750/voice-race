@@ -14,6 +14,7 @@
     "questions:verify": "node scripts/verify-question-flow.mjs"
   },
   "devDependencies": {
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
     "vite": "^6.3.5"
   },
   "allowScripts": {

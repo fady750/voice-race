@@ -93,7 +93,7 @@ export class LocalSpeechService extends SpeechService {
     recognition.lang = language || "ar-EG";
     recognition.interimResults = true;
     recognition.maxAlternatives = 5;
-    recognition.continuous = true;
+    recognition.continuous = false; // Better compatibility on mobile (iOS/Safari)
     recognition.onresult = (event) => {
       const session = this.session;
       if (!session) return;
