@@ -2,7 +2,8 @@ import './WelcomeScreen.css';
 import questionCoinImg from '../assets/QuestionCoin.png';
 import daddcoinImg from '../assets/daddcoin.webp';
 import descriptionImg from '../assets/description.png';
-import exitButtonImg from '../assets/ExitButton.svg';
+import exitButtonImg from '../assets/exit_transparent.png';
+import startButtonImg from '../assets/start_transparent.png';
 
 export class WelcomeScreen {
   constructor(root, options = {}) {
@@ -15,10 +16,6 @@ export class WelcomeScreen {
   #build() {
     this.el = document.createElement('div');
     this.el.className = 'welcome-screen-new';
-    
-    // Header
-    const header = document.createElement('div');
-    header.className = 'welcome-header';
     
     const statsBadge = document.createElement('div');
     statsBadge.className = 'welcome-stats-bg';
@@ -46,14 +43,13 @@ export class WelcomeScreen {
     statsBadge.append(qCoin, this.qCount, separator, this.daddPoints, dCoin);
     
     const exitBtn = document.createElement('button');
-    exitBtn.className = 'welcome-exit-btn';
+    exitBtn.className = 'welcome-action-btn welcome-exit-btn';
     exitBtn.type = 'button';
+    exitBtn.setAttribute('aria-label', 'خروج');
     exitBtn.innerHTML = `<img src="${exitButtonImg}" alt="خروج" />`;
     exitBtn.onclick = () => {
       if (this.onExit) this.onExit();
     };
-
-    header.append(exitBtn, statsBadge);
     
     // Body
     const body = document.createElement('div');
@@ -69,18 +65,26 @@ export class WelcomeScreen {
     // Footer
     const footer = document.createElement('div');
     footer.className = 'welcome-footer';
+
+    const startBtnImage = document.createElement('img');
+    startBtnImage.src = startButtonImg;
+    startBtnImage.alt = '';
+    startBtnImage.setAttribute('aria-hidden', 'true');
     
     this.startBtn = document.createElement('button');
-    this.startBtn.className = 'welcome-start-btn';
-    this.startBtn.textContent = 'ابدَأ!';
+    this.startBtn.className = 'welcome-action-btn welcome-start-btn';
     this.startBtn.type = 'button';
+    this.startBtn.setAttribute('aria-label', 'ابدأ');
+    this.loadingLabel = document.createElement('span');
+    this.loadingLabel.className = 'welcome-loading-label';
+    this.startBtn.append(startBtnImage, this.loadingLabel);
     this.startBtn.onclick = () => {
       if (this.onStart) this.onStart();
     };
     
-    footer.append(this.startBtn);
+    footer.append(exitBtn, this.startBtn);
     
-    this.el.append(header, body, footer);
+    this.el.append(statsBadge, body, footer);
   }
 
   show(questionCount) {
@@ -98,7 +102,9 @@ export class WelcomeScreen {
       this.startBtn.textContent = 'تحميل';
       this.startBtn.disabled = true;
     } else {
-      this.startBtn.textContent = 'ابدَأ!';
+      this.loadingLabel.textContent = '';
+      this.startBtn.classList.remove('is-loading');
+      this.startBtn.setAttribute('aria-label', 'ابدأ');
       this.startBtn.disabled = false;
     }
   }
