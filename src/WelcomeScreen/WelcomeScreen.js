@@ -99,9 +99,7 @@ export class WelcomeScreen {
 
   setLoading(isLoading) {
     if (isLoading) {
-      this.loadingLabel.textContent = 'جاري التحميل...';
-      this.startBtn.classList.add('is-loading');
-      this.startBtn.setAttribute('aria-label', 'جاري تحميل الأسئلة');
+      this.startBtn.textContent = 'تحميل';
       this.startBtn.disabled = true;
     } else {
       this.loadingLabel.textContent = '';
