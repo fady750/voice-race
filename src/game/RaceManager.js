@@ -60,7 +60,8 @@ export class RaceManager {
       this.playerTargetProgress = (this.completedQuestions / this.totalQuestions) * 100;
     }
 
-    const robotCorrect = this.random() < this.robotCorrectChance;
+    // The opponent deliberately answers the opposite way from the player.
+    const robotCorrect = !playerCorrect;
     if (robotCorrect) {
       this.robotSteps = Math.min(this.totalQuestions, this.robotSteps + 1);
       this.robotCorrectStreak += 1;

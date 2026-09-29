@@ -5,7 +5,7 @@ import coinsImage from './assets/money.png';
 import correctImage from './assets/right.png';
 import wrongImage from './assets/wrong.png';
 import exitButtonUrl from '../assets/Exit.png';
-import retryButtonUrl from '../assets/Retry.png';
+import retryButtonUrl from '../assets/retry.png';
 
 const numberValue = (value) => {
   const parsed = Number(value);

@@ -19,12 +19,13 @@ const outcomes = [
 const races = [];
 for (let raceIndex = 0; raceIndex < 48; raceIndex += 1) {
   const race = new RaceManager({ totalQuestions: 10, random: seededRandom(raceIndex + 1) });
+  const playerAnswers = outcomes[raceIndex % outcomes.length];
   let maxStep = 0;
   let minGap = Infinity;
   let maxGap = -Infinity;
   let previousBot = 0;
 
-  for (const playerCorrect of outcomes[raceIndex % outcomes.length]) {
+  for (const playerCorrect of playerAnswers) {
     race.resolveQuestion({ playerCorrect });
     for (let frame = 0; frame < 20; frame += 1) {
       race.tick(0.05);
@@ -42,6 +43,7 @@ for (let raceIndex = 0; raceIndex < 48; raceIndex += 1) {
     botProgress: race.botProgress,
     playerSteps: race.completedQuestions,
     robotSteps: race.robotSteps,
+    expectedRobotSteps: playerAnswers.filter((playerCorrect) => !playerCorrect).length,
     minGap,
     maxGap,
     maxStep,
@@ -52,8 +54,9 @@ assert(races.some((race) => race.playerWon), "The player should win some simulat
 assert(races.some((race) => !race.playerWon), "The AI should win some simulated races.");
 assert(races.some((race) => race.minGap < 0 && race.maxGap > 0), "The lead should change during at least one race.");
 assert(races.every((race) => race.maxStep < 10), "The robot must move smoothly between steps.");
-assert(races.some((race) => race.robotSteps < 10), "The robot should make mistakes.");
+assert(races.some((race) => race.robotSteps < 10), "The robot should make mistakes when the player answers correctly.");
 assert(races.some((race) => race.robotSteps > 0), "The robot should advance in some races.");
+assert(races.every((race) => race.robotSteps === race.expectedRobotSteps), "The robot must get exactly the user's missed answers correct.");
 assert(races.every((race) => race.playerProgress >= 0 && race.playerProgress <= 100), "Player progress must stay bounded.");
 assert(races.every((race) => race.botProgress >= 0 && race.botProgress <= 100), "Robot progress must stay bounded.");
 
