@@ -296,6 +296,12 @@ button {
   gap: 14px;
   margin-top: 4px;
 }
+.question-media-row { display:flex; align-items:center; justify-content:center; gap:10px; margin-top:8px; }
+.question-media-text { color:#16375f; font:800 clamp(14px,2.5vw,22px)/1.2 Cairo,sans-serif; }
+.question-media-image { width:clamp(54px,9vw,92px); height:clamp(54px,9vw,92px); object-fit:contain; border-radius:12px; cursor:zoom-in; background:rgba(0,0,0,.08); }
+.question-image-lightbox { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(0,8,20,.88); backdrop-filter:blur(8px); }
+.question-image-lightbox img { max-width:92vw; max-height:86vh; object-fit:contain; border-radius:18px; }
+.question-image-lightbox button { position:absolute; top:18px; right:18px; width:42px; height:42px; border:0; border-radius:50%; color:#fff; background:#ef4444; font-size:30px; cursor:pointer; }
 
 .question-word {
   margin: 0;
@@ -622,13 +628,16 @@ button {
 }
 
 .feedback-card {
-  min-width: clamp(180px, 30vw, 360px);
+  display:flex; align-items:center; justify-content:center; gap:12px;
+  min-width: clamp(220px, 42vw, 360px);
   padding: clamp(18px, 4vw, 32px) clamp(32px, 6vw, 48px);
-  border-radius: clamp(22px, 4vw, 40px);
+  border-radius: 24px;
   text-align: center;
-  color: #fff;
-  background: rgba(10, 30, 60, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #38ef7d;
+  background: linear-gradient(180deg, rgba(8,48,70,.96), rgba(5,30,48,.94));
+  border: 2px solid #38ef7d;
+  direction: ltr;
+  flex-direction: row;
   backdrop-filter: blur(10px);
 }
 
@@ -641,7 +650,7 @@ button {
 
 .feedback-ar {
   margin: 0;
-  font-size: clamp(48px, 12vw, 92px);
+  font-size: clamp(1.65rem, min(4.8vw, 5.5vh), 3rem);
   font-weight: 900;
   line-height: 1.2;
   direction: rtl;
@@ -663,8 +672,12 @@ button {
 }
 
 .feedback[data-type="wrong"] .feedback-card {
+  border-color: #ff5d5c;
   box-shadow: 0 0 30px rgba(255, 93, 92, 0.35);
 }
+
+.feedback-icon svg { width: 1.15em; height: 1.15em; }
+.feedback-ar { direction: rtl; }
 .feedback[data-type="wrong"] .feedback-ar {
   color: #FF5D5C;
 }

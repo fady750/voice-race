@@ -9,7 +9,7 @@ import "./styles.css";
 const app = document.getElementById("app");
 
 async function boot() {
-  app.innerHTML = `<div class="boot-screen">جاري التحميل...</div>`;
+  app.innerHTML = `<div class="boot-screen">تحميل</div>`;
   try {
     await preloadImages(ASSETS);
     
@@ -20,13 +20,16 @@ async function boot() {
       if (apiQuestions && apiQuestions.length > 0) {
         questionProvider = () => apiQuestions.map(q => {
           const text = q.correctAnswer || q.question;
-          return buildQuestion({
+          const question = buildQuestion({
             id: q.id,
             word: text,
             fullyVocalizedText: text,
             language: "ar-EG",
             audio: q.audioUrl
           });
+          question.questionText = q.question || null;
+          question.imageUrl = q.imageUrl || q.options?.[0]?.imageUrl || null;
+          return question;
         });
       }
     }

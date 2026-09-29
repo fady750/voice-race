@@ -190,6 +190,7 @@ export class Game {
     if (!q) return;
     this.questionStartTime = Date.now();
     this.hud.setWord(q.word);
+    this.hud.setQuestionMedia(q);
     this.hud.setProgress(this.questions.number, this.questions.total);
     this.hud.setDisabled(false);
     this.playWord();

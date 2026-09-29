@@ -30,6 +30,10 @@ export class GameHUD {
             </svg>
           </button>
         </div>
+        <div class="question-media-row">
+          <div class="question-media-text"></div>
+          <img class="question-media-image" alt="صورة السؤال" />
+        </div>
       </div>
 
       <div class="hud-right">
@@ -58,6 +62,8 @@ export class GameHUD {
     
     this.wordEl = this.el.querySelector(".question-word");
     this.speakerBtn = this.el.querySelector(".speaker-btn");
+    this.questionTextEl = this.el.querySelector(".question-media-text");
+    this.questionImageEl = this.el.querySelector(".question-media-image");
   }
 
   setBotScore(value) {
@@ -77,6 +83,23 @@ export class GameHUD {
   
   setWord(word) {
     this.wordEl.textContent = word;
+  }
+
+  setQuestionMedia(question = {}) {
+    const text = question.questionText || '';
+    const image = question.imageUrl || '';
+    this.questionTextEl.textContent = text;
+    this.questionImageEl.src = image;
+    this.questionTextEl.hidden = !text;
+    this.questionImageEl.hidden = !image;
+    this.questionImageEl.onclick = () => {
+      if (!image) return;
+      const overlay = document.createElement('div');
+      overlay.className = 'question-image-lightbox';
+      overlay.innerHTML = `<button type="button" aria-label="إغلاق الصورة">×</button><img src="${image}" alt="صورة السؤال مكبرة" />`;
+      overlay.addEventListener('click', () => overlay.remove());
+      document.body.appendChild(overlay);
+    };
   }
 
   setDisabled(disabled) {

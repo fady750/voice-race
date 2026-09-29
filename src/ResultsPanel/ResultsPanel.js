@@ -4,9 +4,8 @@ import celebrationTitle from './assets/good.png';
 import coinsImage from './assets/money.png';
 import correctImage from './assets/right.png';
 import wrongImage from './assets/wrong.png';
-import buttonFrame from './assets/boutton.png';
-import exitIconUrl from '../assets/ExitButton.svg';
-import retryIconUrl from '../assets/retry.png';
+import exitButtonUrl from '../assets/Exit.png';
+import retryButtonUrl from '../assets/Retry.png';
 
 const numberValue = (value) => {
   const parsed = Number(value);
@@ -33,6 +32,12 @@ export class ResultsPanel {
     const panel = document.createElement("div");
     panel.className = "results-panel";
     panel.style.setProperty("--results-panel-image", `url(${panelFrame})`);
+    const panelFrameImg = document.createElement("img");
+    panelFrameImg.className = "results-panel__frame";
+    panelFrameImg.src = panelFrame;
+    panelFrameImg.alt = "";
+    panelFrameImg.setAttribute("aria-hidden", "true");
+    panel.append(panelFrameImg);
 
     const content = document.createElement("div");
     content.className = "results-panel__content";
@@ -45,7 +50,7 @@ export class ResultsPanel {
     this.titleImg.style.paddingTop = "clamp(24px, 4vh, 40px)";
 
     this.titleText = document.createElement("h2");
-    this.titleText.className = "results-panel__title-text";
+    this.titleText.className = "results-panel__fail-title";
     this.titleText.style.fontSize = "clamp(32px, 8vw, 64px)";
     this.titleText.style.fontWeight = "900";
     this.titleText.style.color = "#fff";
@@ -96,48 +101,23 @@ export class ResultsPanel {
     backBtn.type = "button";
     backBtn.onclick = () => { if (this.onBack) this.onBack(); };
     const backBtnImg = document.createElement("img");
-    backBtnImg.src = buttonFrame;
+    backBtnImg.className = "results-action__bg";
+    backBtnImg.src = exitButtonUrl;
     backBtnImg.alt = "";
     backBtnImg.setAttribute("aria-hidden", "true");
-    const backGrp = document.createElement("span");
-    backGrp.className = "results-action__group";
-    backGrp.style.gap = "8px";
-    const backIcon = document.createElement("img");
-    backIcon.src = exitIconUrl;
-    backIcon.style.width = "24px";
-    backIcon.style.height = "24px";
-    backIcon.style.objectFit = "contain";
-    backIcon.setAttribute("aria-hidden", "true");
-    const backTxt = document.createElement("span");
-    backTxt.textContent = "اخرج";
-    backGrp.append(backIcon, backTxt);
-    backBtn.append(backBtnImg, backGrp);
+    backBtn.append(backBtnImg);
 
     const retryBtn = document.createElement("button");
     retryBtn.className = "results-action results-action--retry";
     retryBtn.type = "button";
     retryBtn.onclick = () => { if (this.onRetry) this.onRetry(); };
     const retryBtnImg = document.createElement("img");
-    retryBtnImg.src = buttonFrame;
+    retryBtnImg.className = "results-action__bg";
+    retryBtnImg.src = retryButtonUrl;
     retryBtnImg.alt = "";
     retryBtnImg.setAttribute("aria-hidden", "true");
     
-    const retryGrp = document.createElement("span");
-    retryGrp.className = "results-action__group";
-    retryGrp.style.gap = "8px";
-    
-    const retryIconImg = document.createElement("img");
-    retryIconImg.src = retryIconUrl;
-    retryIconImg.style.width = "28px";
-    retryIconImg.style.height = "28px";
-    retryIconImg.style.objectFit = "contain";
-    retryIconImg.setAttribute("aria-hidden", "true");
-    
-    const retryTxt = document.createElement("span");
-    retryTxt.textContent = "إعادة";
-
-    retryGrp.append(retryIconImg, retryTxt);
-    retryBtn.append(retryBtnImg, retryGrp);
+    retryBtn.append(retryBtnImg);
 
     actions.append(backBtn, retryBtn);
     screen.append(panel, actions);
@@ -145,19 +125,18 @@ export class ResultsPanel {
   }
 
   show(data = {}) {
-    const maximumScore = numberValue(data.totalScore) || 100;
     const correct = numberValue(data.correctAnswers);
     const wrong = numberValue(data.wrongAnswers);
     const earnedCoins = numberValue(data.coins);
 
-    if (correct >= maximumScore / 2) {
+    const totalAnswers = correct + wrong;
+    if (totalAnswers > 0 && correct / totalAnswers >= 0.5) {
       this.titleImg.style.display = "block";
       this.titleText.style.display = "none";
     } else {
       this.titleImg.style.display = "none";
       this.titleText.style.display = "block";
-      this.titleText.textContent = "حاول مرة أخرى";
-      this.titleText.style.color = "#f44336";
+      this.titleText.textContent = "حاول مرة أخرى!";
     }
 
     this.correctText.textContent = correct;

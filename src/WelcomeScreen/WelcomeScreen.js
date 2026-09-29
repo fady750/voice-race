@@ -95,7 +95,7 @@ export class WelcomeScreen {
 
   setLoading(isLoading) {
     if (isLoading) {
-      this.startBtn.textContent = 'جاري تحميل الأسئلة...';
+      this.startBtn.textContent = 'تحميل';
       this.startBtn.disabled = true;
     } else {
       this.startBtn.textContent = 'ابدَأ!';
