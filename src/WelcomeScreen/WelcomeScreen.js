@@ -2,7 +2,7 @@ import './WelcomeScreen.css';
 import questionCoinImg from '../assets/QuestionCoin.png';
 import daddcoinImg from '../assets/daddcoin.webp';
 import descriptionImg from '../assets/description.png';
-import exitButtonImg from '../assets/exit_transparent.png';
+import exitButtonImg from '../assets/Exit1.png';
 import startButtonImg from '../assets/start_transparent.png';
 
 export class WelcomeScreen {
