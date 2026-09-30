@@ -33,7 +33,7 @@
   background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
-  font-family: 'Cairo', sans-serif;
+  font-family: 'Lateef', sans-serif;
   font-size: 26px;
   font-weight: 800;
 }
@@ -150,7 +150,7 @@
   display: grid;
   place-items: center;
   color: #fff;
-  font-family: 'Lateef', 'Cairo', sans-serif;
+  font-family: 'Lateef', 'Lateef', sans-serif;
   font-size: clamp(16px, 2vw, 24px);
   font-weight: 800;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);

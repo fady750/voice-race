@@ -28,7 +28,7 @@
   justify-content: center;
   gap: clamp(10px, 2.2vh, 24px);
   overflow: hidden;
-  font-family: Cairo, "Segoe UI", sans-serif;
+  font-family: Lateef, "Segoe UI", sans-serif;
 }
 
 .results-panel {
@@ -80,7 +80,7 @@
   width: 100%;
   margin: 0;
   color: #ff3b30;
-  font-family: Cairo, sans-serif;
+  font-family: Lateef, sans-serif;
   font-size: clamp(1.6rem, min(5.5vw, 6vh), 3rem);
   font-weight: 900;
   line-height: 1.15;
@@ -131,7 +131,7 @@
 }
 
 .results-stat-card strong {
-  font-family: Cairo, sans-serif;
+  font-family: Lateef, sans-serif;
   font-size: clamp(1.2rem, min(3.8vw, 4.2vh), 2.2rem);
   font-weight: 900;
   line-height: 1;
@@ -140,7 +140,7 @@
 
 .results-stat-card span {
   color: #facc15;
-  font-family: Cairo, sans-serif;
+  font-family: Lateef, sans-serif;
   font-size: clamp(0.85rem, min(2.5vw, 2.7vh), 1.35rem);
   font-weight: 900;
   line-height: 1;
@@ -218,7 +218,7 @@
 
 .results-grade span {
   color: #76edff;
-  font-family: Cairo, sans-serif;
+  font-family: Lateef, sans-serif;
   font-size: clamp(1rem, min(3vw, 4.2vh), 2.45rem);
   font-weight: 900;
   line-height: 1.05;
@@ -226,7 +226,7 @@
 
 .results-grade strong {
   color: #fff;
-  font-family: Cairo, sans-serif;
+  font-family: Lateef, sans-serif;
   font-size: clamp(1.55rem, min(4.3vw, 5vh), 3.6rem);
   font-weight: 900;
   line-height: 1.05;
@@ -307,7 +307,7 @@
   cursor: pointer;
   background: transparent;
   color: #fff;
-  font-family: Cairo, sans-serif;
+  font-family: Lateef, sans-serif;
   font-size: clamp(1.05rem, 2.7vw, 1.8rem);
   font-weight: 900;
   transition: transform 180ms ease, filter 180ms ease;
@@ -463,4 +463,19 @@
   .results-actions {
     animation-duration: 1ms !important;
   }
+}
+
+/* Keep result icons clear of their values on compact viewports. */
+.results-stat-card {
+  min-height: clamp(112px, 20vh, 172px);
+  aspect-ratio: auto;
+  padding-top: clamp(48px, 6vh, 54px) !important;
+  gap: clamp(2px, .6vh, 8px);
+}
+.results-stat-card > img {
+  top: clamp(-12px, -1.8vh, -8px) !important;
+  height: clamp(38px, min(6vh, 6vw), 52px) !important;
+}
+.results-stat-card--coins > img {
+  height: clamp(42px, min(7vh, 7vw), 58px) !important;
 }

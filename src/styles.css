@@ -15,7 +15,7 @@ body,
   height: 100dvh;
   overflow: hidden;
   background: #071525;
-  font-family: "Lateef", "Cairo", "Segoe UI", sans-serif;
+  font-family: "Lateef", "Lateef", "Segoe UI", sans-serif;
 }
 
 button {
@@ -297,7 +297,7 @@ button {
   margin-top: 4px;
 }
 .question-media-row { display:flex; align-items:center; justify-content:center; gap:10px; margin-top:8px; }
-.question-media-text { color:#16375f; font:800 clamp(14px,2.5vw,22px)/1.2 Cairo,sans-serif; }
+.question-media-text { color:#16375f; font:800 clamp(14px,2.5vw,22px)/1.2 Lateef,sans-serif; }
 .question-media-image { width:clamp(54px,9vw,92px); height:clamp(54px,9vw,92px); object-fit:contain; border-radius:12px; cursor:zoom-in; background:rgba(0,0,0,.08); }
 .question-image-lightbox { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(0,8,20,.88); backdrop-filter:blur(8px); }
 .question-image-lightbox img { max-width:92vw; max-height:86vh; object-fit:contain; border-radius:18px; }
@@ -650,7 +650,7 @@ button {
 
 .feedback-ar {
   margin: 0;
-  font-size: clamp(1.65rem, min(4.8vw, 5.5vh), 3rem);
+  font-size: clamp(2.1rem, min(6vw, 6.4vh), 3.8rem);
   font-weight: 900;
   line-height: 1.2;
   direction: rtl;
@@ -958,7 +958,7 @@ button {
 }
 
 .score-val {
-  font-family: 'Cairo', sans-serif;
+  font-family: 'Lateef', sans-serif;
   font-weight: 800;
   font-size: 18px;
 }
@@ -974,7 +974,7 @@ button {
   flex-direction: column;
   align-items: center;
   color: white;
-  font-family: 'Cairo', sans-serif;
+  font-family: 'Lateef', sans-serif;
 }
 
 .question-info {
