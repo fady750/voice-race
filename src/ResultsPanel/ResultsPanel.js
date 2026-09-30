@@ -59,6 +59,13 @@ export class ResultsPanel {
     this.titleText.style.textShadow = "0 4px 12px rgba(0,0,0,0.5)";
     this.titleText.style.display = "none";
 
+    const gradeCard = document.createElement("div");
+    gradeCard.className = "results-grade";
+    const gradeLabel = document.createElement("span");
+    gradeLabel.textContent = "الدَّرَجَة";
+    this.gradeText = document.createElement("strong");
+    gradeCard.append(gradeLabel, this.gradeText);
+
     const stats = document.createElement("div");
     stats.className = "results-stats";
     stats.setAttribute("aria-label", "إحصاءات الأداء");
@@ -90,7 +97,7 @@ export class ResultsPanel {
     wrongCard.append(wrongImg, this.wrongText);
 
     stats.append(correctCard, coinsCard, wrongCard);
-    content.append(this.titleImg, this.titleText, stats);
+    content.append(this.titleImg, this.titleText, gradeCard, stats);
     panel.append(content);
 
     const actions = document.createElement("div");
@@ -130,6 +137,8 @@ export class ResultsPanel {
     const earnedCoins = numberValue(data.coins);
 
     const totalAnswers = correct + wrong;
+    const correctPercent = totalAnswers ? Math.round((correct / totalAnswers) * 100) : 0;
+    this.gradeText.textContent = `${correctPercent}/100`;
     if (totalAnswers > 0 && correct / totalAnswers >= 0.5) {
       this.titleImg.style.display = "block";
       this.titleText.style.display = "none";

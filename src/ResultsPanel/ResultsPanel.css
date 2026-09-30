@@ -152,6 +152,138 @@
 .results-stat-card--coins strong { color: #facc15; }
 .results-stat-card--coins { direction: rtl; }
 
+.results-stat-card {
+  position: relative;
+  overflow: visible;
+  padding-top: clamp(22px, 4vh, 36px);
+}
+
+.results-stat-card > img {
+  position: absolute;
+  top: clamp(-19px, -2.8vh, -12px);
+  left: 50%;
+  transform: translateX(-50%);
+  height: clamp(34px, min(6vh, 7vw), 52px);
+  margin: 0;
+}
+
+.results-stat-card--coins > img {
+  height: clamp(36px, min(6.5vh, 7.5vw), 56px);
+}
+
+@media (max-width: 420px), (max-height: 520px) {
+  .results-stat-card { padding-top: 22px; gap: 3px; }
+  .results-stat-card > img { height: 32px; top: -13px; }
+  .results-stat-card--coins > img { height: 35px; }
+}
+
+.results-screen {
+  gap: clamp(10px, 2.4vh, 28px);
+  padding: clamp(8px, 1.5vh, 18px) clamp(8px, 2vw, 24px);
+}
+
+.results-panel {
+  width: min(92vw, 1280px, calc(78dvh * 1.55));
+  max-height: 78dvh;
+}
+
+.results-panel__content {
+  padding: 5.5% 8% 6%;
+  gap: clamp(4px, 1.3vh, 16px);
+}
+
+.results-panel__title {
+  width: min(46%, 600px);
+  max-height: clamp(38px, 13vh, 138px);
+}
+
+.results-grade {
+  width: min(38%, 470px);
+  max-width: 82%;
+  min-height: clamp(76px, 17%, 156px);
+  box-sizing: border-box;
+  padding: clamp(7px, 1.4vh, 16px) 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0px, 0.5vh, 6px);
+  border: 1.5px solid rgba(83, 240, 255, 0.95);
+  border-radius: clamp(18px, 3vw, 42px);
+  background: linear-gradient(145deg, rgba(15, 81, 100, 0.88), rgba(19, 56, 72, 0.94));
+  box-shadow: inset 0 0 18px rgba(0, 223, 255, 0.32), 0 0 22px rgba(0, 226, 255, 0.22);
+  color: #fff;
+  text-align: center;
+}
+
+.results-grade span {
+  color: #76edff;
+  font-family: Cairo, sans-serif;
+  font-size: clamp(1rem, min(3vw, 4.2vh), 2.45rem);
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.results-grade strong {
+  color: #fff;
+  font-family: Cairo, sans-serif;
+  font-size: clamp(1.55rem, min(4.3vw, 5vh), 3.6rem);
+  font-weight: 900;
+  line-height: 1.05;
+  direction: ltr;
+}
+
+.results-stats {
+  width: min(82%, 960px);
+  gap: clamp(12px, 4vw, 64px);
+  align-items: center;
+}
+
+.results-stat-card {
+  max-width: clamp(104px, 24%, 275px);
+  aspect-ratio: 1.12 / 1;
+  padding: clamp(14px, 2.5vh, 28px) clamp(7px, 1vw, 14px) clamp(8px, 1.5vh, 18px);
+  border-color: rgba(90, 239, 255, 0.88);
+  border-radius: clamp(20px, 3vw, 42px);
+  background: rgba(20, 69, 86, 0.9);
+  box-shadow: inset 0 0 20px rgba(0, 202, 229, 0.35), 0 0 18px rgba(0, 222, 255, 0.25);
+}
+
+.results-stat-card--coins { transform: translateY(clamp(8px, 2.6vh, 34px)); }
+.results-stat-card > img { top: clamp(-34px, -4vh, -18px); height: clamp(42px, 9vh, 110px); }
+.results-stat-card--coins > img { height: clamp(48px, 11vh, 128px); }
+.results-stat-card strong { font-size: clamp(1.5rem, min(4vw, 5vh), 3.6rem); }
+.results-stat-card span { font-size: clamp(0.9rem, min(2.8vw, 3.5vh), 2.1rem); }
+
+.results-actions {
+  width: min(78vw, 960px);
+  gap: clamp(20px, 7vw, 110px);
+}
+
+.results-action {
+  max-width: 480px;
+  min-width: 0;
+  aspect-ratio: 3.2 / 1;
+}
+
+@media (max-width: 620px), (max-height: 620px) {
+  .results-panel { width: min(94vw, 1280px, calc(78dvh * 1.55)); }
+  .results-panel__content { padding: 5% 6% 6%; gap: clamp(3px, 0.65vh, 8px); }
+  .results-panel__title { width: min(52%, 360px); max-height: clamp(30px, 7vh, 58px); }
+  .results-grade { width: min(56%, 350px); min-height: clamp(56px, 13%, 88px); padding: 4px 8px; border-radius: 18px; }
+  .results-grade span { font-size: clamp(0.78rem, 3.4vw, 1.25rem); }
+  .results-grade strong { font-size: clamp(1.25rem, 5vw, 2rem); }
+  .results-stats { width: 94%; gap: clamp(6px, 2vw, 14px); }
+  .results-stat-card { max-width: none; min-width: 0; aspect-ratio: 1 / 1.02; padding: 19px 4px 5px; gap: 3px; border-radius: 16px; }
+  .results-stat-card > img { height: clamp(28px, 8vw, 48px); top: -13px; }
+  .results-stat-card--coins { transform: translateY(7px); }
+  .results-stat-card--coins > img { height: clamp(34px, 9vw, 54px); }
+  .results-stat-card strong { font-size: clamp(1.2rem, 5vw, 1.85rem); }
+  .results-stat-card span { font-size: clamp(0.72rem, 3.2vw, 1.1rem); }
+  .results-actions { width: min(88vw, 680px); gap: clamp(8px, 3vw, 20px); }
+  .results-action { width: auto; max-width: 320px; min-width: 0; font-size: clamp(0.85rem, 3.5vw, 1.3rem); }
+}
+
 .results-actions {
   width: min(88vw, 680px, calc(min(64dvh, 550px) * 1.55));
   display: flex;
