@@ -310,6 +310,18 @@ export class Game {
     if (import.meta.env.DEV) {
       console.error(`[Pronunciation] Failed (${error?.code || "unknown"}):`, error);
     }
+
+    if (error?.code === "pronunciation_model_missing") {
+      import("../speech/LocalSpeechService.js").then(({ LocalSpeechService }) => {
+        this.speech = new LocalSpeechService();
+      });
+      this.state.failToIdle("خدمة الصوت غير متصلة. جاري التبديل للوضع المحلي... حاول مرة أخرى.");
+      this.microphone.setState("idle");
+      this.feedback.show("error", null);
+      this.feedbackTimer = window.setTimeout(() => this.feedback.hide(), 3000);
+      return;
+    }
+
     const message =
       error instanceof SpeechError
         ? error.message
