@@ -408,7 +408,10 @@ export class Game {
     this.botCar.setGlow(false);
     this.hud.setDisabled(true);
 
-    if (this.questions.isLast) {
+    const targetScore = Math.ceil(this.sessionStats.totalQuestions / 2);
+    const wonEarly = this.sessionStats.correctAnswers >= targetScore;
+
+    if (wonEarly || this.questions.isLast) {
       this.showFinish(false);
       return;
     }
