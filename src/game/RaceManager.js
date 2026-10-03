@@ -55,20 +55,21 @@ export class RaceManager {
   }
 
   resolveQuestion({ playerCorrect = false } = {}) {
+    const targetScore = Math.ceil(this.totalQuestions / 2);
     if (playerCorrect) {
-      this.completedQuestions = Math.min(this.totalQuestions, this.completedQuestions + 1);
-      this.playerTargetProgress = (this.completedQuestions / this.totalQuestions) * 100;
+      this.completedQuestions = Math.min(targetScore, this.completedQuestions + 1);
+      this.playerTargetProgress = (this.completedQuestions / targetScore) * 100;
     }
 
     // The opponent deliberately answers the opposite way from the player.
     const robotCorrect = !playerCorrect;
     if (robotCorrect) {
-      this.robotSteps = Math.min(this.totalQuestions, this.robotSteps + 1);
+      this.robotSteps = Math.min(targetScore, this.robotSteps + 1);
       this.robotCorrectStreak += 1;
     } else {
       this.robotCorrectStreak = 0;
     }
-    this.robotTargetProgress = (this.robotSteps / this.totalQuestions) * 100;
+    this.robotTargetProgress = (this.robotSteps / targetScore) * 100;
   }
 
   completeQuestion() {

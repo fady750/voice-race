@@ -1,9 +1,12 @@
+import carsSound from "../assets/cars.mp3";
+
 export class AudioManager {
   constructor() {
     this.context = null;
     this.muted = false;
     this.unlocked = false;
     this.wordAudio = null;
+    this.boostAudio = new Audio(carsSound);
   }
 
   unlock() {
@@ -68,7 +71,9 @@ export class AudioManager {
   }
 
   playBoost() {
-    this.#tone({ frequency: 220, duration: 0.28, type: "sawtooth", gain: 0.03, slideTo: 440 });
+    if (this.muted) return;
+    this.boostAudio.currentTime = 0;
+    this.boostAudio.play().catch(() => {});
   }
 
   playFinish() {
