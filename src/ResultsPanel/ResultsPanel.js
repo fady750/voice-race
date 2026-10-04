@@ -1,11 +1,8 @@
 import './ResultsPanel.css';
-import panelFrame from './assets/banal.png';
+import panelArt from '../assets/results-panel-empty.png';
 import celebrationTitle from './assets/good.png';
-import coinsImage from './assets/money.png';
-import correctImage from './assets/right.png';
-import wrongImage from './assets/wrong.png';
-import exitButtonUrl from '../assets/Exit.png';
-import retryButtonUrl from '../assets/retry.png';
+import exitButtonImage from '../assets/Exit1.png';
+import retryButtonImage from '../assets/Retry.png';
 
 const numberValue = (value) => {
   const parsed = Number(value);
@@ -24,81 +21,62 @@ export class ResultsPanel {
     this.el = document.createElement("div");
     this.el.className = "results-overlay";
 
-    const screen = document.createElement("section");
-    screen.className = "results-screen";
-    screen.setAttribute("aria-label", "نتائج اللعبة");
-    screen.dir = "rtl";
+    this.screen = document.createElement("section");
+    this.screen.className = "results-screen";
+    this.screen.setAttribute("aria-label", "نتائج اللعبة");
+    this.screen.dir = "rtl";
 
     const panel = document.createElement("div");
     panel.className = "results-panel";
-    panel.style.setProperty("--results-panel-image", `url(${panelFrame})`);
-    const panelFrameImg = document.createElement("img");
-    panelFrameImg.className = "results-panel__frame";
-    panelFrameImg.src = panelFrame;
-    panelFrameImg.alt = "";
-    panelFrameImg.setAttribute("aria-hidden", "true");
-    panel.append(panelFrameImg);
 
-    const content = document.createElement("div");
-    content.className = "results-panel__content";
+    const panelArtImg = document.createElement("img");
+    panelArtImg.className = "results-panel__art";
+    panelArtImg.src = panelArt;
+    panelArtImg.alt = "";
+    panelArtImg.onload = () => {
+      if (panelArtImg.naturalWidth && panelArtImg.naturalHeight) {
+        this.screen.style.setProperty('--rp-ratio', String(panelArtImg.naturalWidth / panelArtImg.naturalHeight));
+      }
+    };
 
-    this.titleImg = document.createElement("img");
-    this.titleImg.className = "results-panel__title";
-    this.titleImg.src = celebrationTitle;
-    this.titleImg.alt = "أحسنت";
-    this.titleImg.style.display = "none";
-    this.titleImg.style.paddingTop = "clamp(24px, 4vh, 40px)";
+    this.successImg = document.createElement("img");
+    this.successImg.className = "results-title";
+    this.successImg.src = celebrationTitle;
+    this.successImg.alt = "أحسنت";
 
-    this.titleText = document.createElement("h2");
-    this.titleText.className = "results-panel__fail-title";
-    this.titleText.style.fontSize = "clamp(32px, 8vw, 64px)";
-    this.titleText.style.fontWeight = "900";
-    this.titleText.style.color = "#fff";
-    this.titleText.style.margin = "0 0 16px 0";
-    this.titleText.style.paddingTop = "clamp(32px, 6vh, 60px)";
-    this.titleText.style.textShadow = "0 4px 12px rgba(0,0,0,0.5)";
-    this.titleText.style.display = "none";
+    this.failDiv = document.createElement("div");
+    this.failDiv.className = "results-title results-title--fail";
+    this.failDiv.textContent = "حاول مرة أخرى!";
 
-    const gradeCard = document.createElement("div");
-    gradeCard.className = "results-grade";
-    const gradeLabel = document.createElement("span");
-    gradeLabel.textContent = "الدَّرَجَة";
-    this.gradeText = document.createElement("strong");
-    gradeCard.append(gradeLabel, this.gradeText);
+    this.gradeNum = document.createElement("strong");
+    this.gradeNum.className = "results-num results-num--grade";
+    this.gradeNum.setAttribute("aria-hidden", "true");
 
-    const stats = document.createElement("div");
-    stats.className = "results-stats";
-    stats.setAttribute("aria-label", "إحصاءات الأداء");
+    this.correctNum = document.createElement("strong");
+    this.correctNum.className = "results-num results-num--correct";
+    this.correctNum.setAttribute("aria-hidden", "true");
 
-    const correctCard = document.createElement("div");
-    correctCard.className = "results-stat-card results-stat-card--correct";
-    const correctImg = document.createElement("img");
-    correctImg.src = correctImage;
-    correctImg.alt = "إجابات صحيحة";
-    this.correctText = document.createElement("strong");
-    correctCard.append(correctImg, this.correctText);
+    this.coinsNum = document.createElement("strong");
+    this.coinsNum.className = "results-num results-num--coins";
+    this.coinsNum.setAttribute("aria-hidden", "true");
 
-    const coinsCard = document.createElement("div");
-    coinsCard.className = "results-stat-card results-stat-card--coins";
-    const coinsImg = document.createElement("img");
-    coinsImg.src = coinsImage;
-    coinsImg.alt = "عملات مكتسبة";
-    this.coinsText = document.createElement("strong");
-    const coinsLabel = document.createElement("span");
-    coinsLabel.textContent = "فِلُوس";
-    coinsCard.append(coinsImg, this.coinsText, coinsLabel);
+    this.wrongNum = document.createElement("strong");
+    this.wrongNum.className = "results-num results-num--wrong";
+    this.wrongNum.setAttribute("aria-hidden", "true");
 
-    const wrongCard = document.createElement("div");
-    wrongCard.className = "results-stat-card results-stat-card--wrong";
-    const wrongImg = document.createElement("img");
-    wrongImg.src = wrongImage;
-    wrongImg.alt = "إجابات خاطئة";
-    this.wrongText = document.createElement("strong");
-    wrongCard.append(wrongImg, this.wrongText);
+    this.srText = document.createElement("p");
+    this.srText.className = "results-sr";
 
-    stats.append(correctCard, coinsCard, wrongCard);
-    content.append(this.titleImg, this.titleText, gradeCard, stats);
-    panel.append(content);
+    panel.append(
+      panelArtImg,
+      this.successImg,
+      this.failDiv,
+      this.gradeNum,
+      this.correctNum,
+      this.coinsNum,
+      this.wrongNum,
+      this.srText
+    );
 
     const actions = document.createElement("div");
     actions.className = "results-actions";
@@ -109,9 +87,8 @@ export class ResultsPanel {
     backBtn.onclick = () => { if (this.onBack) this.onBack(); };
     const backBtnImg = document.createElement("img");
     backBtnImg.className = "results-action__bg";
-    backBtnImg.src = exitButtonUrl;
-    backBtnImg.alt = "";
-    backBtnImg.setAttribute("aria-hidden", "true");
+    backBtnImg.src = exitButtonImage;
+    backBtnImg.alt = "خروج";
     backBtn.append(backBtnImg);
 
     const retryBtn = document.createElement("button");
@@ -120,37 +97,39 @@ export class ResultsPanel {
     retryBtn.onclick = () => { if (this.onRetry) this.onRetry(); };
     const retryBtnImg = document.createElement("img");
     retryBtnImg.className = "results-action__bg";
-    retryBtnImg.src = retryButtonUrl;
-    retryBtnImg.alt = "";
-    retryBtnImg.setAttribute("aria-hidden", "true");
-    
+    retryBtnImg.src = retryButtonImage;
+    retryBtnImg.alt = "إعادة المحاولة";
     retryBtn.append(retryBtnImg);
 
     actions.append(backBtn, retryBtn);
-    screen.append(panel, actions);
-    this.el.append(screen);
+    this.screen.append(panel, actions);
+    this.el.append(this.screen);
   }
 
   show(data = {}) {
     const correct = numberValue(data.correctAnswers);
     const wrong = numberValue(data.wrongAnswers);
     const earnedCoins = numberValue(data.coins);
+    
+    // Fallback: in original code, totalQuestions wasn't provided, so we derive it
+    const questionCount = numberValue(data.totalQuestions) || (correct + wrong);
+    const correctPercent = questionCount ? Math.round((correct / questionCount) * 100) : 0;
+    const isSuccess = questionCount > 0 && correctPercent >= 50;
 
-    const totalAnswers = correct + wrong;
-    const correctPercent = totalAnswers ? Math.round((correct / totalAnswers) * 100) : 0;
-    this.gradeText.textContent = `${correctPercent}/100`;
-    if (totalAnswers > 0 && correct / totalAnswers >= 0.5) {
-      this.titleImg.style.display = "block";
-      this.titleText.style.display = "none";
+    if (isSuccess) {
+      this.successImg.style.display = "block";
+      this.failDiv.style.display = "none";
     } else {
-      this.titleImg.style.display = "none";
-      this.titleText.style.display = "block";
-      this.titleText.textContent = "حاول مرة أخرى!";
+      this.successImg.style.display = "none";
+      this.failDiv.style.display = "flex"; // matching the CSS
     }
 
-    this.correctText.textContent = correct;
-    this.wrongText.textContent = wrong;
-    this.coinsText.textContent = `+${earnedCoins}`;
+    this.gradeNum.textContent = `${correctPercent}/100`;
+    this.correctNum.textContent = String(correct);
+    this.coinsNum.textContent = `+${earnedCoins}`;
+    this.wrongNum.textContent = String(wrong);
+    
+    this.srText.textContent = `الدرجة ${correctPercent} من 100. إجابات صحيحة ${correct}. إجابات خاطئة ${wrong}. فلوس مكتسبة ${earnedCoins}.`;
 
     this.root.appendChild(this.el);
   }

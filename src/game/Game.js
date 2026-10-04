@@ -10,6 +10,7 @@ import { WelcomeScreen } from "../WelcomeScreen/WelcomeScreen.js";
 import { GameHUD } from "../components/GameHUD.js";
 import { InfiniteRoad } from "../components/InfiniteRoad.js";
 import { RacePositionBar } from "../components/Indicators.js";
+import { handleExitSite } from "../utils/navigation.js";
 import { MicrophoneButton } from "../components/MicrophoneButton.js";
 import { GameStateManager } from "./GameStateManager.js";
 import { QuestionManager } from "./QuestionManager.js";
@@ -84,7 +85,7 @@ export class Game {
     this.celebration = new Celebration(this.ui);
     this.resultsPanel = new ResultsPanel(this.ui, {
       onRetry: () => this.resetRound(true),
-      onBack: () => window.location.reload()
+      onBack: handleExitSite
     });
     this.exitModal = new ExitModal(this.ui);
     this.welcomeScreen = new WelcomeScreen(this.ui, {

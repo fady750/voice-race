@@ -82,16 +82,21 @@ export class GameHUD {
   }
   
   setWord(word) {
-    this.wordEl.textContent = word;
+    this.wordEl.textContent = word === '.' ? '' : word;
   }
 
   setQuestionMedia(question = {}) {
-    const text = question.questionText || '';
+    const text = question.questionText === '.' ? '' : (question.questionText || '');
     const image = question.imageUrl || '';
     this.questionTextEl.textContent = text;
     this.questionImageEl.src = image;
     this.questionTextEl.hidden = !text;
     this.questionImageEl.hidden = !image;
+    if (image) {
+      this.el.classList.add('has-image');
+    } else {
+      this.el.classList.remove('has-image');
+    }
     this.questionImageEl.onclick = () => {
       if (!image) return;
       const overlay = document.createElement('div');

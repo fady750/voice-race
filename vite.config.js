@@ -96,11 +96,11 @@ export default defineConfig(({ mode }) => {
     `[Azure proxy] root=${projectRoot} keyConfigured=${keyConfigured} regionConfigured=${regionConfigured}`,
   );
   return {
-    plugins: [basicSsl(), azurePronunciationProxy(env)],
+    plugins: [azurePronunciationProxy(env)],
     server: {
       port: 5179,
       host: true,
-      https: true,
+      // https: true,
     },
     preview: {
       port: 4173,
