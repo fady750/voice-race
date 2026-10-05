@@ -1,5 +1,78 @@
-const BASE_URL = 'https://learning-platform-1euu.onrender.com/api/v1';
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://learning-platform-1euu.onrender.com';
+const BASE_URL = `${API_URL}/api/v1`;
 const GAME_ID = 14;
+
+let latestToken = null;
+
+const refreshAccessToken = async () => {
+  try {
+    let refreshRes = await fetch(`${BASE_URL}/student/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: "{}"
+    });
+
+    if (!refreshRes.ok) {
+      refreshRes = await fetch(`${BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: "{}"
+      });
+    }
+
+    if (refreshRes.ok) {
+      const refreshData = await refreshRes.json();
+      const newToken = refreshData?.data?.accessToken || refreshData?.data?.token || refreshData?.accessToken || refreshData?.token;
+      if (newToken) {
+        console.log("Token refreshed successfully.");
+        latestToken = newToken;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('token')) urlParams.set('token', newToken);
+        if (urlParams.has('accesstoken')) urlParams.set('accesstoken', newToken);
+        const newUrl = window.location.pathname + '?' + urlParams.toString();
+        window.history.replaceState(null, '', newUrl);
+
+        return newToken;
+      }
+    } else {
+      console.error("Token refresh failed on both endpoints with status", refreshRes.status);
+    }
+  } catch (err) {
+    console.error("Error during token refresh", err);
+  }
+  return null;
+};
+
+const apiFetch = async (url, options = {}, initialToken = null) => {
+  if (!latestToken && initialToken) {
+    latestToken = initialToken;
+  }
+  if (!latestToken && !initialToken) {
+    await refreshAccessToken();
+  }
+
+  const currentToken = latestToken || initialToken;
+  const fetchOptions = { ...options };
+  if (currentToken) {
+    fetchOptions.headers = { ...(fetchOptions.headers || {}), Authorization: `Bearer ${currentToken}` };
+  }
+
+  let res = await fetch(url, fetchOptions);
+
+  if (res.status === 401) {
+    console.warn("401 Unauthorized encountered. Attempting to refresh token...");
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      fetchOptions.headers = { ...(fetchOptions.headers || {}), Authorization: `Bearer ${newToken}` };
+      res = await fetch(url, fetchOptions);
+    }
+  }
+  
+  return res;
+};
 
 export class ApiService {
   constructor() {
@@ -7,16 +80,19 @@ export class ApiService {
     this.token = params.get('token');
     this.lessonId = params.get('lessonId');
     this.sessionId = null;
+    
+    if (!this.token && !latestToken) {
+      refreshAccessToken();
+    }
   }
 
   get hasToken() {
-    return !!this.token;
+    return true; // Token logic is now handled internally, so game can start even if token is not initially present in URL
   }
 
   get headers() {
     return {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.token}`,
     };
   }
 
@@ -27,7 +103,7 @@ export class ApiService {
     }
 
     try {
-      const response = await fetch(url, { headers: this.headers });
+      const response = await apiFetch(url, { headers: this.headers }, this.token);
       if (!response.ok) throw new Error('Failed to fetch questions');
       const data = await response.json();
       return data.data?.questions || [];
@@ -44,10 +120,10 @@ export class ApiService {
     }
 
     try {
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'POST',
         headers: this.headers,
-      });
+      }, this.token);
       if (!response.ok) throw new Error('Failed to start session');
       const data = await response.json();
       if (data.id) {
@@ -65,7 +141,7 @@ export class ApiService {
 
     const url = `${BASE_URL}/student/games/sessions/${this.sessionId}/submit-answers`;
     try {
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'POST',
         headers: this.headers,
         body: JSON.stringify({
@@ -77,7 +153,7 @@ export class ApiService {
             }
           ]
         })
-      });
+      }, this.token);
       if (!response.ok) throw new Error('Failed to submit answer');
       return await response.json();
     } catch (error) {
@@ -91,10 +167,10 @@ export class ApiService {
 
     const url = `${BASE_URL}/student/games/sessions/${this.sessionId}/complete`;
     try {
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'POST',
         headers: this.headers,
-      });
+      }, this.token);
       if (!response.ok) throw new Error('Failed to complete game');
       return await response.json();
     } catch (error) {
