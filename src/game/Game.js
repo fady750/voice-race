@@ -359,7 +359,19 @@ export class Game {
         : "لم نتمكن من سماعك، حاول مرة أخرى.";
     this.state.failToIdle(message);
     this.microphone.setState("idle");
-    this.feedback.show("error", null);
+
+    // Environment problems (permission, HTTPS, network, unsupported browser) are not the
+    // learner's pronunciation, so tell them the real reason instead of a bare "خطأ".
+    const environmentErrors = ["permission_denied", "insecure_context", "mic_unavailable", "local_recognizer_unavailable", "network"];
+    const isEnvironmentError = environmentErrors.includes(error?.code);
+    this.feedback.show("error", isEnvironmentError ? message : null);
+
+    if (isEnvironmentError) {
+      // Do not count this against the learner or auto-advance the question.
+      this.sessionStats.retries = Math.max(0, this.sessionStats.retries - 1);
+      this.feedbackTimer = window.setTimeout(() => this.feedback.hide(), 3500);
+      return;
+    }
 
     if (this.sessionStats.retries >= 3) {
       console.warn('[Pronunciation] Multiple attempts failed on question; advancing as incorrect answer.');
