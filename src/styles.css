@@ -264,16 +264,16 @@ button {
 .mic-wrap {
   position: absolute;
   top: calc(var(--question-panel-bottom, 380px) + clamp(14px, 2vh, 24px));
-  left: var(--question-panel-center-x, calc(100% - 327px));
-  transform: translateX(-50%);
-  right: auto;
+  right: clamp(24px, 4vw, 80px);
+  left: auto;
+  transform: none;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  z-index: 10;
+  z-index: 12;
   pointer-events: none;
-  transition: top 0.2s ease-out, left 0.2s ease-out;
+  transition: top 0.2s ease-out, right 0.2s ease-out;
 }
 
 .mic-btn {
@@ -1076,11 +1076,12 @@ button {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: min(654px, calc(50vw - var(--road-half-width, 220px) - clamp(16px, 2.2vw, 36px)));
+  width: min(654px, max(360px, calc(50vw - var(--road-half-width, 220px) - clamp(16px, 2.2vw, 36px))));
   min-height: min(240px, 28vh);
+  max-height: min(460px, calc(100vh - var(--hud-header-bottom, 96px) - 140px));
   height: auto;
   box-sizing: border-box;
-  padding: clamp(10px, 1.4vh, 18px) clamp(16px, 2.2vw, 32px);
+  padding: clamp(16px, 2.2vh, 26px) clamp(22px, 2.8vw, 40px);
   background: rgba(8, 24, 42, 0.82);
   border: 1.5px solid rgba(255, 255, 255, 0.24);
   border-right: none;
@@ -1092,6 +1093,27 @@ button {
   -webkit-backdrop-filter: blur(16px);
   pointer-events: auto;
   transition: top 0.2s ease-out, right 0.2s ease-out, width 0.2s ease-out;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
+}
+
+.question-prompt-panel::-webkit-scrollbar {
+  width: 5px;
+}
+
+.question-prompt-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.question-prompt-panel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+}
+
+.question-prompt-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.45);
 }
 
 .question-prompt-main {
@@ -1099,8 +1121,9 @@ button {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: clamp(4px, 0.9vh, 10px);
+  gap: clamp(6px, 1.2vh, 12px);
   width: 100%;
+  margin: auto 0;
 }
 
 .question-prompt-top-row {
@@ -1117,19 +1140,22 @@ button {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: clamp(4px, 0.8vh, 8px);
   width: 100%;
   min-width: 0;
+  box-sizing: border-box;
+  padding: clamp(4px, 0.8vh, 10px) clamp(6px, 1.2vw, 14px);
 }
 
 .question-prompt-panel .question-word {
   margin: 0;
   font-family: 'Scheherazade New', 'Amiri', serif;
-  font-size: clamp(54px, 6.5vw, 92px);
+  font-size: clamp(48px, 5.8vw, 84px);
   font-weight: 700;
-  line-height: 1.22;
+  line-height: 1.32;
   direction: rtl;
-  padding-bottom: clamp(2px, 0.5vw, 8px);
+  padding-inline: clamp(6px, 1vw, 14px);
+  padding-block: clamp(4px, 0.8vh, 10px);
   background: linear-gradient(180deg, #FFFFFF 15%, #E2F2FF 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -1139,17 +1165,64 @@ button {
   text-align: center;
   user-select: none;
   width: 100%;
-  word-break: break-word;
+  max-width: 100%;
+  box-sizing: border-box;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  text-wrap: balance;
+  transition: font-size 0.2s ease-out, line-height 0.2s ease-out;
+}
+
+.question-prompt-panel .question-word.is-single-word,
+.question-prompt-panel[data-word-tier="short"] .question-word {
+  white-space: nowrap;
+}
+
+/* Dynamic font-size tiers for words/questions of different lengths */
+.question-prompt-panel[data-word-tier="short"] .question-word,
+.question-prompt-panel .question-word.is-tier-short {
+  font-size: clamp(48px, 5.8vw, 84px);
+  line-height: 1.3;
+}
+
+.question-prompt-panel[data-word-tier="medium"] .question-word,
+.question-prompt-panel .question-word.is-tier-medium {
+  font-size: clamp(36px, 4.4vw, 58px);
+  line-height: 1.34;
+}
+
+.question-prompt-panel[data-word-tier="long"] .question-word,
+.question-prompt-panel .question-word.is-tier-long {
+  font-size: clamp(27px, 3.2vw, 42px);
+  line-height: 1.38;
+}
+
+.question-prompt-panel[data-word-tier="very-long"] .question-word,
+.question-prompt-panel .question-word.is-tier-very-long {
+  font-size: clamp(22px, 2.5vw, 32px);
+  line-height: 1.42;
 }
 
 .question-prompt-panel .question-media-text {
   font-family: 'Scheherazade New', 'Amiri', serif;
-  font-size: clamp(22px, 2.5vw, 30px);
+  font-size: clamp(20px, 2.2vw, 28px);
   font-weight: 700;
   color: #E2E8F0;
-  line-height: 1.35;
+  line-height: 1.38;
   text-align: center;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  word-break: normal;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+  padding-inline: clamp(4px, 0.8vw, 10px);
+}
+
+.question-prompt-panel .question-media-text.is-text-long {
+  font-size: clamp(16px, 1.8vw, 22px);
+  line-height: 1.42;
 }
 
 .question-prompt-panel .speaker-btn {
@@ -1316,11 +1389,15 @@ button {
     top: calc(var(--hud-header-bottom, 72px) - 1px);
     right: 0;
     left: auto;
-    width: calc(50vw - var(--road-half-width, 90px) - clamp(8px, 2vw, 14px));
+    width: min(280px, calc(100vw - 64px));
+    min-width: 200px;
     min-height: auto;
-    padding: 6px 8px;
-    border-radius: 24px 0 0 24px;
+    max-height: calc(100vh - var(--hud-header-bottom, 72px) - 130px);
+    padding: clamp(10px, 1.6vh, 16px) clamp(12px, 2.4vw, 18px);
+    border-radius: 28px 0 0 28px;
     border-right: none;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
   .question-prompt-top-row {
@@ -1329,8 +1406,49 @@ button {
   }
 
   .question-prompt-panel .question-word {
-    font-size: clamp(28px, 7.2vw, 46px);
-    padding-bottom: 2px;
+    padding-inline: 4px;
+    padding-block: 4px;
+    word-break: keep-all;
+    overflow-wrap: normal;
+  }
+
+  .question-prompt-panel .question-word.is-single-word,
+  .question-prompt-panel[data-word-tier="short"] .question-word {
+    white-space: nowrap;
+  }
+
+  .question-prompt-panel[data-word-tier="short"] .question-word,
+  .question-prompt-panel .question-word.is-tier-short {
+    font-size: clamp(28px, 6.8vw, 42px);
+    line-height: 1.3;
+  }
+
+  .question-prompt-panel[data-word-tier="medium"] .question-word,
+  .question-prompt-panel .question-word.is-tier-medium {
+    font-size: clamp(23px, 5.5vw, 32px);
+    line-height: 1.34;
+  }
+
+  .question-prompt-panel[data-word-tier="long"] .question-word,
+  .question-prompt-panel .question-word.is-tier-long {
+    font-size: clamp(19px, 4.6vw, 25px);
+    line-height: 1.38;
+  }
+
+  .question-prompt-panel[data-word-tier="very-long"] .question-word,
+  .question-prompt-panel .question-word.is-tier-very-long {
+    font-size: clamp(16px, 3.8vw, 21px);
+    line-height: 1.4;
+  }
+
+  .question-prompt-panel .question-media-text {
+    font-size: clamp(15px, 3.8vw, 19px);
+    line-height: 1.35;
+  }
+
+  .question-prompt-panel .question-media-text.is-text-long {
+    font-size: clamp(13px, 3.2vw, 16px);
+    line-height: 1.38;
   }
 
   .question-prompt-panel .speaker-btn {
@@ -1351,9 +1469,9 @@ button {
 
   .mic-wrap {
     top: calc(var(--question-panel-bottom, 220px) + 10px);
-    left: var(--question-panel-center-x, calc(100% - 75px));
-    transform: translateX(-50%);
-    right: auto;
+    right: clamp(6px, 1.6vw, 14px);
+    left: auto;
+    transform: none;
   }
 
   .mic-btn {
@@ -1372,3 +1490,47 @@ button {
     margin-top: 6px;
   }
 }
+
+/* Submitting Answers Spinner Overlay (wordless spinner) */
+.submitting-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(5, 11, 25, 0.75);
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: submittingFadeIn 0.3s ease-out;
+  pointer-events: auto;
+}
+
+.submitting-spinner {
+  width: 58px;
+  height: 58px;
+  border: 4.5px solid rgba(255, 255, 255, 0.15);
+  border-top-color: #00f0ff;
+  border-right-color: #00f0ff;
+  border-radius: 50%;
+  animation: submittingSpin 0.75s linear infinite;
+  filter: drop-shadow(0 0 14px rgba(0, 240, 255, 0.75));
+}
+
+@keyframes submittingSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes submittingFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+

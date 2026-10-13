@@ -191,6 +191,7 @@ export class Game {
     this.feedback.hide();
     this.celebration.hide();
     this.resultsPanel.hide();
+    document.querySelector('.submitting-overlay')?.remove();
     this.particles.replaceChildren();
     this.raceBar.reset();
     this.#syncHud();
@@ -492,7 +493,27 @@ export class Game {
     this.microphone.setState("idle");
     this.hud.setDisabled(true);
 
+    const showSubmittingSpinner = () => {
+      let overlay = document.querySelector('.submitting-overlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'submitting-overlay';
+        overlay.setAttribute('aria-busy', 'true');
+        overlay.innerHTML = '<div class="submitting-spinner"></div>';
+        document.body.appendChild(overlay);
+      }
+      return overlay;
+    };
+
+    const hideSubmittingSpinner = () => {
+      const overlay = document.querySelector('.submitting-overlay');
+      if (overlay) {
+        overlay.remove();
+      }
+    };
+
     const finalize = async () => {
+      showSubmittingSpinner();
       let apiStats = null;
       if (api.hasToken) {
         try {
@@ -508,7 +529,11 @@ export class Game {
         } catch (e) {
           console.error('[API] Error in finalize:', e);
         }
+      } else {
+        await new Promise((r) => setTimeout(r, 600));
       }
+
+      hideSubmittingSpinner();
 
       const data = {
         score: apiStats?.data?.score ?? apiStats?.score ?? this.sessionStats.correctAnswers,

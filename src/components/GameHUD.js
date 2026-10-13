@@ -93,15 +93,46 @@ export class GameHUD {
     this.questionImageEl = this.questionPanel.querySelector(".question-media-image");
 
     this.syncPanelMetrics = this.syncPanelMetrics.bind(this);
+    this.adjustWordFontSize = this.adjustWordFontSize.bind(this);
     if (typeof ResizeObserver !== "undefined") {
       this.resizeObserver = new ResizeObserver(() => {
+        this.adjustWordFontSize();
         this.syncPanelMetrics();
       });
       this.resizeObserver.observe(this.el);
       this.resizeObserver.observe(this.questionPanel);
     }
-    window.addEventListener("resize", this.syncPanelMetrics);
-    requestAnimationFrame(() => this.syncPanelMetrics());
+    window.addEventListener("resize", () => {
+      this.adjustWordFontSize();
+      this.syncPanelMetrics();
+    });
+    requestAnimationFrame(() => {
+      this.adjustWordFontSize();
+      this.syncPanelMetrics();
+    });
+  }
+
+  adjustWordFontSize() {
+    if (!this.wordEl || !this.questionPanel) return;
+    const cleanWord = this.wordEl.textContent.trim();
+    if (!cleanWord) return;
+
+    // Reset inline font size so CSS tier font size applies first
+    this.wordEl.style.fontSize = '';
+
+    const panelRect = this.questionPanel.getBoundingClientRect();
+    if (panelRect.width <= 0) return;
+
+    // Available horizontal width inside panel factoring padding
+    const maxAvailableWidth = Math.max(90, panelRect.width - 28);
+
+    let currentFontSize = parseFloat(window.getComputedStyle(this.wordEl).fontSize) || 28;
+    const minFontSize = 14;
+
+    while (this.wordEl.scrollWidth > maxAvailableWidth && currentFontSize > minFontSize) {
+      currentFontSize -= 1.5;
+      this.wordEl.style.fontSize = `${currentFontSize}px`;
+    }
   }
 
   syncPanelMetrics() {
@@ -161,7 +192,25 @@ export class GameHUD {
   }
 
   setWord(word) {
-    this.wordEl.textContent = word === '.' ? '' : word;
+    const cleanWord = word === '.' ? '' : (word || '');
+    this.wordEl.textContent = cleanWord;
+
+    // Base Arabic character length (ignoring Arabic diacritics / harakat)
+    const baseLength = cleanWord.replace(/[\u064B-\u065F\u0670]/g, '').trim().length;
+    let tier = 'short';
+    if (baseLength > 28) {
+      tier = 'very-long';
+    } else if (baseLength > 16) {
+      tier = 'long';
+    } else if (baseLength > 7) {
+      tier = 'medium';
+    }
+
+    const isSingleWord = !cleanWord.trim().includes(' ');
+    this.questionPanel.dataset.wordTier = tier;
+    this.wordEl.className = `question-word is-tier-${tier}${isSingleWord ? ' is-single-word' : ''}`;
+
+    this.adjustWordFontSize();
     this.syncPanelMetrics();
   }
 
@@ -172,10 +221,17 @@ export class GameHUD {
 
     if (text && text !== question.word && text.trim().length > 0) {
       this.questionTextEl.textContent = text;
+      const textBaseLen = text.replace(/[\u064B-\u065F\u0670]/g, '').trim().length;
+      if (textBaseLen > 25) {
+        this.questionTextEl.classList.add('is-text-long');
+      } else {
+        this.questionTextEl.classList.remove('is-text-long');
+      }
       this.questionTextEl.hidden = false;
       this.questionTextEl.style.display = 'block';
     } else {
       this.questionTextEl.textContent = '';
+      this.questionTextEl.classList.remove('is-text-long');
       this.questionTextEl.hidden = true;
       this.questionTextEl.style.display = 'none';
     }
