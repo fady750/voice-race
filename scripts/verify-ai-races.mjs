@@ -43,7 +43,7 @@ for (let raceIndex = 0; raceIndex < 48; raceIndex += 1) {
     botProgress: race.botProgress,
     playerSteps: race.completedQuestions,
     robotSteps: race.robotSteps,
-    expectedRobotSteps: playerAnswers.filter((playerCorrect) => !playerCorrect).length,
+    expectedRobotSteps: Math.min(Math.ceil(playerAnswers.length / 2), playerAnswers.filter((playerCorrect) => !playerCorrect).length),
     minGap,
     maxGap,
     maxStep,

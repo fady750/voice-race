@@ -7,21 +7,65 @@ export class AudioManager {
     this.unlocked = false;
     this.wordAudio = null;
     this.boostAudio = new Audio(carsSound);
+    this.boostAudio.preload = "auto";
+    try {
+      this.boostAudio.load();
+    } catch (_) {}
+
+    // Pre-warm SpeechSynthesis voices so they are ready when needed
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      try {
+        window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = () => {
+          try { window.speechSynthesis.getVoices(); } catch (_) {}
+        };
+      } catch (_) {}
+    }
+
+    // Auto-resume audio context when returning to the tab
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden && this.context && this.context.state === "suspended") {
+          this.context.resume().catch(() => {});
+        }
+      });
+    }
   }
 
   unlock() {
-    if (this.unlocked) return;
     const context = this.#getContext();
-    if (context.state === "suspended") {
+    if (context && context.state === "suspended") {
       context.resume().catch(() => {});
     }
+
+    // Play a tiny silent buffer to warm up Web Audio on iOS/Safari
+    try {
+      const buffer = context.createBuffer(1, 1, 22050);
+      const source = context.createBufferSource();
+      source.buffer = buffer;
+      source.connect(context.destination);
+      source.start(0);
+    } catch (_) {}
+
+    // Pre-warm HTML5 audio element
+    if (this.boostAudio) {
+      try {
+        this.boostAudio.load();
+      } catch (_) {}
+    }
+
     this.unlocked = true;
   }
 
   #getContext() {
     if (!this.context) {
       const Ctor = window.AudioContext || window.webkitAudioContext;
-      this.context = new Ctor();
+      if (Ctor) {
+        this.context = new Ctor();
+      }
+    }
+    if (this.context && this.context.state === "suspended") {
+      this.context.resume().catch(() => {});
     }
     return this.context;
   }
@@ -29,19 +73,24 @@ export class AudioManager {
   #tone({ frequency, duration, type = "sine", gain = 0.08, slideTo }) {
     if (this.muted) return;
     const ctx = this.#getContext();
-    const oscillator = ctx.createOscillator();
-    const amp = ctx.createGain();
-    oscillator.type = type;
-    oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
-    if (slideTo) {
-      oscillator.frequency.exponentialRampToValueAtTime(slideTo, ctx.currentTime + duration);
+    if (!ctx) return;
+    try {
+      const oscillator = ctx.createOscillator();
+      const amp = ctx.createGain();
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+      if (slideTo) {
+        oscillator.frequency.exponentialRampToValueAtTime(slideTo, ctx.currentTime + duration);
+      }
+      amp.gain.setValueAtTime(gain, ctx.currentTime);
+      amp.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      oscillator.connect(amp);
+      amp.connect(ctx.destination);
+      oscillator.start();
+      oscillator.stop(ctx.currentTime + duration);
+    } catch (e) {
+      console.warn('[Audio] Failed to synthesize tone:', e);
     }
-    amp.gain.setValueAtTime(gain, ctx.currentTime);
-    amp.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-    oscillator.connect(amp);
-    amp.connect(ctx.destination);
-    oscillator.start();
-    oscillator.stop(ctx.currentTime + duration);
   }
 
   playMicStart() {
@@ -72,8 +121,15 @@ export class AudioManager {
 
   playBoost() {
     if (this.muted) return;
-    this.boostAudio.currentTime = 0;
-    this.boostAudio.play().catch(() => {});
+    try {
+      this.boostAudio.currentTime = 0;
+      const playPromise = this.boostAudio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn('[Audio] Boost play was prevented:', err);
+        });
+      }
+    } catch (_) {}
   }
 
   playFinish() {
@@ -84,19 +140,36 @@ export class AudioManager {
 
   stopSpeech() {
     if (this.wordAudio) {
-      this.wordAudio.pause();
-      this.wordAudio.currentTime = 0;
+      try {
+        this.wordAudio.pause();
+        this.wordAudio.currentTime = 0;
+      } catch (_) {}
+      this.wordAudio = null;
     }
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch (_) {}
+    }
   }
 
   speakWord(word, language = "ar-EG", audioSrc) {
     this.stopSpeech();
     if (audioSrc) {
-      this.wordAudio = new Audio(audioSrc);
-      this.wordAudio.play().catch(() => {
+      try {
+        this.wordAudio = new Audio(audioSrc);
+        this.wordAudio.preload = "auto";
+        this.wordAudio.volume = 1.0;
+        const playPromise = this.wordAudio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((err) => {
+            console.warn('[Audio] Audio file failed, falling back to speech synthesis:', err);
+            if (word) this.#speakFallback(word, language);
+          });
+        }
+      } catch (_) {
         if (word) this.#speakFallback(word, language);
-      });
+      }
       return;
     }
     if (word) this.#speakFallback(word, language);
@@ -104,12 +177,17 @@ export class AudioManager {
 
   #speakFallback(word, language) {
     if (!window.speechSynthesis || !word) return;
-    const utterance = new SpeechSynthesisUtterance(word);
-    utterance.lang = language;
-    utterance.rate = 0.85;
-    const voices = window.speechSynthesis.getVoices();
-    const arabicVoice = voices.find((voice) => voice.lang.toLowerCase().startsWith("ar"));
-    if (arabicVoice) utterance.voice = arabicVoice;
-    window.speechSynthesis.speak(utterance);
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = language;
+      utterance.rate = 0.85;
+      const voices = window.speechSynthesis.getVoices();
+      const arabicVoice = voices.find((voice) => voice.lang.toLowerCase().startsWith("ar"));
+      if (arabicVoice) utterance.voice = arabicVoice;
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.warn('[Audio] Speech synthesis fallback failed:', e);
+    }
   }
 }

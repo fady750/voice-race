@@ -69,8 +69,15 @@ export class Celebration {
     this.fadeTimer = null;
     this.completeTimer = null;
     this.animationFrame = null;
+    this.sound = createCelebrationSound({ muted: this.muted, soundUrl: this.soundUrl });
     
     this.#build();
+  }
+
+  unlockSound() {
+    if (this.sound && this.sound.unlock) {
+      this.sound.unlock();
+    }
   }
 
   #build() {
@@ -116,7 +123,9 @@ export class Celebration {
     this.el.classList.remove("celebration--leaving");
     this.root.appendChild(this.el);
 
-    this.sound = createCelebrationSound({ muted: this.muted, soundUrl: this.soundUrl });
+    if (!this.sound) {
+      this.sound = createCelebrationSound({ muted: this.muted, soundUrl: this.soundUrl });
+    }
     this.sound.start();
 
     this.particles = [];

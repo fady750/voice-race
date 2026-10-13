@@ -57,8 +57,9 @@ export class InfiniteRoad {
     const vh = rect.height || window.innerHeight;
     this.viewportHeight = vh;
     
-    // Cap the road width at 500px so it retains a long, narrow perspective on big screens
-    const width = Math.min(500, Math.max(220, vw * 0.56));
+    // Cap the road width at 460px and scale gracefully down to 180px on smaller screens
+    // leaving ample room for the record button on the left and question div on the right
+    const width = Math.min(460, Math.max(180, vw * 0.44));
     const height = width * (this.naturalHeight / this.naturalWidth);
     this.segmentHeight = height;
     
@@ -72,6 +73,10 @@ export class InfiniteRoad {
     });
     
     this.#paint();
+
+    document.documentElement.style.setProperty('--road-width', `${width}px`);
+    document.documentElement.style.setProperty('--road-half-width', `${width / 2}px`);
+
     return { width, height };
   }
 

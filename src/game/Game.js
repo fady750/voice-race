@@ -3,7 +3,6 @@ import { AudioManager } from "../audio/AudioManager.js";
 import { Background } from "../components/Background.js";
 import { BotCar, PlayerCar } from "../components/Cars.js";
 import { Feedback } from "../components/Feedback.js";
-import { ExitModal } from "../components/FinishScreen.js";
 import { Celebration } from "../Celebration/Celebration.js";
 import { ResultsPanel } from "../ResultsPanel/ResultsPanel.js";
 import { WelcomeScreen } from "../WelcomeScreen/WelcomeScreen.js";
@@ -20,7 +19,7 @@ import { createSpeechService } from "../speech/createSpeechService.js";
 import { logSpeechDebug, SpeechDebugPanel } from "../speech/speechDebug.js";
 import { SpeechError } from "../speech/SpeechService.js";
 import { smoothDamp } from "../utils/easing.js";
-import { api } from "../utils/api.js";
+import { api, onUserProfileChange, getUserProfile } from "../utils/api.js";
 
 export class Game {
   constructor(root, questionProvider = createQuestions) {
@@ -51,6 +50,7 @@ export class Game {
       wrongAnswers: 0,
       retries: 0,
     };
+    this.collectedAnswers = [];
 
     this.#build();
     this.#bind();
@@ -87,36 +87,59 @@ export class Game {
       onRetry: () => this.resetRound(true),
       onBack: handleExitSite
     });
-    this.exitModal = new ExitModal(this.ui);
     this.welcomeScreen = new WelcomeScreen(this.ui, {
-      onStart: () => this.beginGame()
+      onStart: () => {
+        this.#unlockAudio();
+        this.beginGame();
+      }
     });
 
     this.particles = document.createElement("div");
     this.particles.className = "spark-layer";
     this.ui.appendChild(this.particles);
+
+    // Apply user profile (avatar & frame accessory) if already fetched or when updated
+    onUserProfileChange((profile) => {
+      if (profile) {
+        const avatar = profile.avatarUrl || ASSETS.user;
+        const accessory = profile.accessoryUrl || null;
+        if (this.hud) this.hud.setUserAvatar(avatar, accessory);
+        if (this.raceBar) this.raceBar.setPlayerAvatar(avatar, accessory);
+      }
+    });
+
+    const initialProfile = getUserProfile();
+    if (initialProfile) {
+      const avatar = initialProfile.avatarUrl || ASSETS.user;
+      const accessory = initialProfile.accessoryUrl || null;
+      this.hud.setUserAvatar(avatar, accessory);
+      this.raceBar.setPlayerAvatar(avatar, accessory);
+    }
+
     if (SPEECH_DEBUG) this.speechDebug = new SpeechDebugPanel(this.ui);
   }
 
   #bind() {
     this.microphone.button.addEventListener("click", () => this.onMicPressed());
     this.hud.speakerBtn.addEventListener("click", () => this.playWord());
-    this.hud.closeBtn.addEventListener("click", () => this.exitModal.show());
-    this.exitModal.stayBtn.addEventListener("click", () => this.exitModal.hide());
-    this.exitModal.leaveBtn.addEventListener("click", () => {
-      this.exitModal.hide();
-      this.showFinish(true);
-    });
+    this.hud.closeBtn.addEventListener("click", () => handleExitSite());
     window.addEventListener("resize", () => this.#resize());
-    window.addEventListener("pointerdown", () => this.#unlockAudio(), { once: true });
+    window.addEventListener("pointerdown", () => this.#unlockAudio());
+    window.addEventListener("touchstart", () => this.#unlockAudio(), { passive: true });
+    window.addEventListener("keydown", () => this.#unlockAudio());
 
     const first = this.road.segments[0];
     if (first.complete) this.#resize();
     else first.addEventListener("load", () => this.#resize(), { once: true });
+    requestAnimationFrame(() => this.#resize());
+    setTimeout(() => this.#resize(), 120);
   }
 
   #unlockAudio() {
     this.audio.unlock();
+    if (this.celebration && this.celebration.unlockSound) {
+      this.celebration.unlockSound();
+    }
     this.audioReady = true;
   }
 
@@ -132,6 +155,13 @@ export class Game {
     
     // Y translation required to move the car's top edge to the finish line's bottom edge
     this.maxTravel = finishBottomY - carDefaultTopY;
+
+    if (finishRect && finishRect.height > 0) {
+      const finishCenterY = finishRect.top + (finishRect.height / 2);
+      document.documentElement.style.setProperty('--finish-line-y', `${Math.round(finishCenterY)}px`);
+    }
+
+    this.hud?.syncPanelMetrics();
   }
 
   resetRound(fromFinish) {
@@ -152,6 +182,7 @@ export class Game {
       wrongAnswers: 0,
       retries: 0,
     };
+    this.collectedAnswers = [];
     this.race.reset();
     this.road.setQuestionCount(this.questions.total);
     this.state.reset({ coins: COINS.start });
@@ -160,7 +191,6 @@ export class Game {
     this.feedback.hide();
     this.celebration.hide();
     this.resultsPanel.hide();
-    this.exitModal.hide();
     this.particles.replaceChildren();
     this.raceBar.reset();
     this.#syncHud();
@@ -330,6 +360,16 @@ export class Game {
     this.state.failToIdle(message);
     this.microphone.setState("idle");
     this.feedback.show("error", null);
+
+    if (this.sessionStats.retries >= 3) {
+      console.warn('[Pronunciation] Multiple attempts failed on question; advancing as incorrect answer.');
+      this.feedbackTimer = window.setTimeout(() => {
+        this.feedback.hide();
+        this.applyResult({ result: "wrong" });
+      }, 1500);
+      return;
+    }
+
     this.feedbackTimer = window.setTimeout(() => this.feedback.hide(), 1800);
   }
 
@@ -363,10 +403,18 @@ export class Game {
       return;
     }
     
-    if (api.hasToken && q) {
-      const timeTaken = Math.round((Date.now() - (this.questionStartTime || Date.now())) / 1000);
-      const selectedAnswer = result === "correct" ? q.word : q.word + q.word;
-      api.submitAnswer(q.id, selectedAnswer, timeTaken).catch(e => console.error(e));
+    if (q) {
+      const timeTaken = Math.max(1, Math.round((Date.now() - (this.questionStartTime || Date.now())) / 1000));
+      const numericQuestionId = typeof q.id === 'number' ? q.id : (Number(q.id) || (this.sessionStats.answeredQuestions + 1));
+      const selectedAnswer = result === "correct" ? q.word : (q.word + q.word);
+      const answerRecord = {
+        questionId: numericQuestionId,
+        selectedAnswer,
+        isCorrect: result === "correct",
+        timeTaken,
+        pointsEarned: result === "correct" ? 10 : 0
+      };
+      this.collectedAnswers.push(answerRecord);
     }
 
     this.state.toFeedback(result);
@@ -436,23 +484,33 @@ export class Game {
       let apiStats = null;
       if (api.hasToken) {
         try {
+          const answersToSend = (this.collectedAnswers && this.collectedAnswers.length > 0)
+            ? this.collectedAnswers
+            : [{
+                questionId: this.questions.current?.id ? (Number(this.questions.current.id) || 1) : 1,
+                selectedAnswer: "none",
+                timeTaken: 1
+              }];
+          await api.submitAnswers(answersToSend);
           apiStats = await api.completeGame();
         } catch (e) {
-          console.error(e);
+          console.error('[API] Error in finalize:', e);
         }
       }
 
       const data = {
-        score: apiStats?.score ?? this.sessionStats.correctAnswers,
+        score: apiStats?.data?.score ?? apiStats?.score ?? this.sessionStats.correctAnswers,
         totalScore: this.sessionStats.totalQuestions,
+        totalQuestions: this.sessionStats.totalQuestions,
         correctAnswers: this.sessionStats.correctAnswers,
         wrongAnswers: this.sessionStats.wrongAnswers,
-        coins: apiStats?.coins ?? this.state.coins,
+        coins: apiStats?.data?.coins ?? apiStats?.coins ?? this.state.coins,
         playerProgress: this.race.playerProgress,
         botProgress: this.race.botProgress
       };
       
-      if (this.sessionStats.correctAnswers >= this.sessionStats.totalQuestions / 2) {
+      const userWon = this.sessionStats.correctAnswers >= Math.ceil(this.sessionStats.totalQuestions / 2);
+      if (userWon) {
         this.celebration.show(() => {
           this.resultsPanel.show(data);
         });
@@ -465,9 +523,9 @@ export class Game {
       finalize();
     } else {
       this.audio.playFinish();
+      finalize();
       window.setTimeout(() => {
         this.isExiting = true;
-        this.onExitComplete = finalize;
       }, 800);
     }
   }
