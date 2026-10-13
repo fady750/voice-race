@@ -349,7 +349,7 @@ export class Game {
       });
       this.state.failToIdle("خدمة الصوت غير متصلة. جاري التبديل للوضع المحلي... حاول مرة أخرى.");
       this.microphone.setState("idle");
-      this.feedback.show("error", null);
+      this.feedback.show("retry", "حاول ثانية");
       this.feedbackTimer = window.setTimeout(() => this.feedback.hide(), 3000);
       return;
     }
@@ -365,14 +365,17 @@ export class Game {
     // learner's pronunciation, so tell them the real reason instead of a bare "خطأ".
     const environmentErrors = ["permission_denied", "insecure_context", "mic_unavailable", "local_recognizer_unavailable", "network"];
     const isEnvironmentError = environmentErrors.includes(error?.code);
-    this.feedback.show("error", isEnvironmentError ? message : null);
 
     if (isEnvironmentError) {
+      this.feedback.show("error", message);
       // Do not count this against the learner or auto-advance the question.
       this.sessionStats.retries = Math.max(0, this.sessionStats.retries - 1);
       this.feedbackTimer = window.setTimeout(() => this.feedback.hide(), 3500);
       return;
     }
+
+    // When user sound cannot be recognized, render the retry modal with "حاول ثانية"
+    this.feedback.show("retry", "حاول ثانية");
 
     if (this.sessionStats.retries >= 3) {
       console.warn('[Pronunciation] Multiple attempts failed on question; advancing as incorrect answer.');
