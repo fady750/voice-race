@@ -2,12 +2,11 @@ import assert from "node:assert/strict";
 import { RaceManager } from "../src/game/RaceManager.js";
 
 for (const totalQuestions of [5, 10, 15]) {
-  const targetScore = Math.ceil(totalQuestions / 2);
   const race = new RaceManager({ totalQuestions, random: () => 0.5 });
-  for (let completed = 1; completed <= targetScore; completed += 1) {
+  for (let completed = 1; completed <= totalQuestions; completed += 1) {
     race.completeQuestion();
     assert.equal(race.completedQuestions, completed);
-    const expectedProgress = completed >= targetScore ? 100 : (completed / totalQuestions) * 100;
+    const expectedProgress = (completed / totalQuestions) * 100;
     assert.equal(race.playerTargetProgress, expectedProgress);
     for (let frame = 0; frame < 20; frame += 1) race.tick(0.05);
     assert(race.playerProgress <= 100);

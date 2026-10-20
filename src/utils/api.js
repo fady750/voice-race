@@ -342,10 +342,23 @@ export class ApiService {
     }
   }
 
-  async startGameSession() {
-    if (this.sessionId) {
+  resetSession() {
+    this.sessionId = null;
+    this.sessionPromise = null;
+  }
+
+  async startGameSession(forceNew = false) {
+    if (!this.hasToken) {
+      console.log('[API] No token provided, skipping session creation');
+      return null;
+    }
+
+    if (this.sessionId && !forceNew) {
       return { success: true, data: { id: this.sessionId } };
     }
+
+    this.sessionId = null;
+    this.sessionPromise = null;
 
     let url = `${BASE_URL}/student/games/${this.gameId}/sessions`;
     if (this.lessonId) {
@@ -446,7 +459,8 @@ export class ApiService {
       return null;
     }
 
-    const url = `${BASE_URL}/student/games/sessions/${this.sessionId}/complete`;
+    const currentSessionId = this.sessionId;
+    const url = `${BASE_URL}/student/games/sessions/${currentSessionId}/complete`;
     console.log('[API] Completing game session at:', url);
     try {
       const response = await apiFetch(url, {
@@ -460,9 +474,13 @@ export class ApiService {
       }
       const data = await response.json();
       console.log('[API] completeGame succeeded:', data);
+      this.sessionId = null;
+      this.sessionPromise = null;
       return data;
     } catch (error) {
       console.error('[API] Error completing game:', error);
+      this.sessionId = null;
+      this.sessionPromise = null;
       return null;
     }
   }

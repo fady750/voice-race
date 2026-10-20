@@ -120,9 +120,18 @@ export class Game {
   }
 
   #bind() {
-    this.microphone.button.addEventListener("click", () => this.onMicPressed());
-    this.hud.speakerBtn.addEventListener("click", () => this.playWord());
-    this.hud.closeBtn.addEventListener("click", () => handleExitSite());
+    this.microphone.button.addEventListener("click", () => {
+      if (this.state.isFinished || this.isExiting || this.microphone?.isDisabled) return;
+      this.onMicPressed();
+    });
+    this.hud.speakerBtn.addEventListener("click", () => {
+      if (this.state.isFinished || this.isExiting || this.hud?.speakerBtn?.disabled) return;
+      this.playWord();
+    });
+    this.hud.closeBtn.addEventListener("click", () => {
+      if (this.state.isFinished || this.isExiting || this.hud?.closeBtn?.disabled) return;
+      handleExitSite();
+    });
     window.addEventListener("resize", () => this.#resize());
     window.addEventListener("pointerdown", () => this.#unlockAudio());
     window.addEventListener("touchstart", () => this.#unlockAudio(), { passive: true });
@@ -195,11 +204,14 @@ export class Game {
     this.particles.replaceChildren();
     this.raceBar.reset();
     this.#syncHud();
+    this.hud.setDisabled(false);
+    this.microphone.setDisabled(false);
     this.microphone.setState("idle");
 
     if (fromFinish) {
       if (api.hasToken) {
-        api.startGameSession().catch(e => console.error(e));
+        api.resetSession();
+        api.startGameSession(true).catch(e => console.error('[API] Error starting new session on retry:', e));
       }
       this.#syncQuestion();
       this.audio.playMicStart();
@@ -210,6 +222,9 @@ export class Game {
 
   beginGame() {
     this.welcomeScreen.hide();
+    this.hud.setDisabled(false);
+    this.microphone.setDisabled(false);
+    this.microphone.setState("idle");
     if (api.hasToken) {
       api.startGameSession().catch(e => console.error(e));
     }
@@ -473,10 +488,7 @@ export class Game {
     this.botCar.setGlow(false);
     this.hud.setDisabled(true);
 
-    const targetScore = Math.ceil(this.sessionStats.totalQuestions / 2);
-    const wonEarly = this.sessionStats.correctAnswers >= targetScore;
-
-    if (wonEarly || this.questions.isLast) {
+    if (this.questions.isLast) {
       this.showFinish(false);
       return;
     }
@@ -493,8 +505,10 @@ export class Game {
   showFinish(fromExit) {
     this.clearTimers();
     this.state.toFinished();
+    this.microphone.setDisabled(true);
     this.microphone.setState("idle");
     this.hud.setDisabled(true);
+    document.querySelector('.question-image-lightbox')?.remove();
 
     const showSubmittingSpinner = () => {
       let overlay = document.querySelector('.submitting-overlay');
@@ -518,6 +532,8 @@ export class Game {
     const finalize = async () => {
       showSubmittingSpinner();
       let apiStats = null;
+      let hasError = false;
+
       if (api.hasToken) {
         try {
           const answersToSend = (this.collectedAnswers && this.collectedAnswers.length > 0)
@@ -527,10 +543,20 @@ export class Game {
                 selectedAnswer: "none",
                 timeTaken: 1
               }];
-          await api.submitAnswers(answersToSend);
+          const submitRes = await api.submitAnswers(answersToSend);
+          if (!submitRes || submitRes.success === false) {
+            console.warn('[API] submitAnswers returned error response:', submitRes);
+            hasError = true;
+          }
+
           apiStats = await api.completeGame();
+          if (!apiStats || apiStats.success === false || apiStats.error) {
+            console.warn('[API] completeGame returned error response:', apiStats);
+            hasError = true;
+          }
         } catch (e) {
           console.error('[API] Error in finalize:', e);
+          hasError = true;
         }
       } else {
         await new Promise((r) => setTimeout(r, 600));
@@ -538,18 +564,25 @@ export class Game {
 
       hideSubmittingSpinner();
 
+      // If there is an error in response of result panel, make coins equal zero
+      let earnedCoins = 0;
+      if (!hasError && apiStats) {
+        earnedCoins = apiStats?.data?.coins ?? apiStats?.data?.reward?.coins ?? apiStats?.coins ?? 0;
+      }
+
       const data = {
         score: apiStats?.data?.score ?? apiStats?.score ?? this.sessionStats.correctAnswers,
         totalScore: this.sessionStats.totalQuestions,
         totalQuestions: this.sessionStats.totalQuestions,
         correctAnswers: this.sessionStats.correctAnswers,
         wrongAnswers: this.sessionStats.wrongAnswers,
-        coins: apiStats?.data?.coins ?? apiStats?.coins ?? this.state.coins,
+        coins: earnedCoins,
+        hasError: hasError,
         playerProgress: this.race.playerProgress,
         botProgress: this.race.botProgress
       };
       
-      const userWon = this.sessionStats.correctAnswers >= Math.ceil(this.sessionStats.totalQuestions / 2);
+      const userWon = !hasError && (this.sessionStats.correctAnswers >= Math.ceil(this.sessionStats.totalQuestions / 2));
       if (userWon) {
         this.celebration.show(() => {
           this.resultsPanel.show(data);

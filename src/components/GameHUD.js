@@ -282,6 +282,23 @@ export class GameHUD {
   }
 
   setDisabled(disabled) {
-    this.speakerBtn.disabled = disabled;
+    const d = Boolean(disabled);
+    if (this.speakerBtn) {
+      this.speakerBtn.disabled = d;
+      this.speakerBtn.style.pointerEvents = d ? 'none' : '';
+    }
+    if (this.closeBtn) {
+      this.closeBtn.disabled = d;
+      this.closeBtn.style.pointerEvents = d ? 'none' : '';
+    }
+    if (this.questionImageEl) {
+      this.questionImageEl.style.pointerEvents = d ? 'none' : '';
+    }
+    if (this.questionPanel) {
+      this.questionPanel.style.pointerEvents = d ? 'none' : '';
+    }
+    if (this.el) {
+      this.el.style.pointerEvents = d ? 'none' : '';
+    }
   }
 }

@@ -81,40 +81,52 @@ export class ResultsPanel {
     const actions = document.createElement("div");
     actions.className = "results-actions";
 
-    const backBtn = document.createElement("button");
-    backBtn.className = "results-action results-action--back";
-    backBtn.type = "button";
-    backBtn.onclick = () => { if (this.onBack) this.onBack(); };
+    this.actionTriggered = false;
+
+    this.backBtn = document.createElement("button");
+    this.backBtn.className = "results-action results-action--back";
+    this.backBtn.type = "button";
+    this.backBtn.onclick = () => {
+      if (this.actionTriggered) return;
+      this.actionTriggered = true;
+      if (this.onBack) this.onBack();
+    };
     const backBtnImg = document.createElement("img");
     backBtnImg.className = "results-action__bg";
     backBtnImg.src = exitButtonImage;
     backBtnImg.alt = "خروج";
-    backBtn.append(backBtnImg);
+    this.backBtn.append(backBtnImg);
 
-    const retryBtn = document.createElement("button");
-    retryBtn.className = "results-action results-action--retry";
-    retryBtn.type = "button";
-    retryBtn.onclick = () => { if (this.onRetry) this.onRetry(); };
+    this.retryBtn = document.createElement("button");
+    this.retryBtn.className = "results-action results-action--retry";
+    this.retryBtn.type = "button";
+    this.retryBtn.onclick = () => {
+      if (this.actionTriggered) return;
+      this.actionTriggered = true;
+      if (this.onRetry) this.onRetry();
+    };
     const retryBtnImg = document.createElement("img");
     retryBtnImg.className = "results-action__bg";
     retryBtnImg.src = retryButtonImage;
     retryBtnImg.alt = "إعادة المحاولة";
-    retryBtn.append(retryBtnImg);
+    this.retryBtn.append(retryBtnImg);
 
-    actions.append(backBtn, retryBtn);
+    actions.append(this.backBtn, this.retryBtn);
     this.screen.append(panel, actions);
     this.el.append(this.screen);
   }
 
   show(data = {}) {
+    this.actionTriggered = false;
+    const isError = Boolean(data.error || data.hasError);
     const correct = numberValue(data.correctAnswers);
     const wrong = numberValue(data.wrongAnswers);
-    const earnedCoins = numberValue(data.coins);
+    const earnedCoins = isError ? 0 : numberValue(data.coins);
     
     // Fallback: in original code, totalQuestions wasn't provided, so we derive it
     const questionCount = numberValue(data.totalQuestions) || (correct + wrong);
     const correctPercent = questionCount ? Math.round((correct / questionCount) * 100) : 0;
-    const isSuccess = questionCount > 0 && correctPercent >= 50;
+    const isSuccess = !isError && questionCount > 0 && correctPercent >= 50;
 
     if (isSuccess) {
       this.successImg.style.display = "block";

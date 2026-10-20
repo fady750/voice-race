@@ -26,6 +26,14 @@ export class MicrophoneButton {
     root.appendChild(this.el);
     this.button = this.el.querySelector(".mic-btn");
     this.label = this.el.querySelector(".mic-label");
+    this.isDisabled = false;
+  }
+
+  setDisabled(disabled) {
+    this.isDisabled = Boolean(disabled);
+    this.button.disabled = this.isDisabled;
+    this.button.style.pointerEvents = disabled ? 'none' : '';
+    this.el.style.pointerEvents = disabled ? 'none' : '';
   }
 
   setState(state) {
@@ -33,7 +41,7 @@ export class MicrophoneButton {
     this.button.classList.toggle("is-recording", state === "recording");
     this.button.classList.toggle("is-processing", state === "processing");
     this.label.textContent = LABELS[state] || LABELS.idle;
-    const busy = state === "processing" || state === "correct" || state === "close" || state === "wrong";
+    const busy = this.isDisabled || state === "processing" || state === "correct" || state === "close" || state === "wrong";
     this.button.disabled = busy;
   }
 }
